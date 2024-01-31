@@ -18,32 +18,82 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
     mapping(uint256 => Competition) public competitions;
 
     // EVENTS
-    event competitionCreated(
-        uint256 competitions_id,
+    event CompetitionCreated(
+        uint256 competitionsId,
         address creator,
         address owner,
         Token[] tokens,
         uint256 start,
         uint256 end,
         Level[] levels,
-        uint256 reward_percentage
+        uint256 rewardPercentage
     );
 
-    event competitionStatusChanged(
-        uint256 competitions_id,
+    event CompetitionStatusChanged(
+        uint256 competitionsId,
         Status oldStatus,
         Status newStatus
     );
 
-    event competitionOwnerChanged(
-        uint256 competitions_id,
+    event CompetitionOwnerChanged(
+        uint256 competitionsId,
         address oldOwner,
         address newOwner
     );
 
+    event Contributed(
+        address competitor,
+        uint256 competitionId,
+        address token,
+        uint256 amount,
+        uint256 usdAmount
+    );
+
+    // Contribute to the competition
+    function contribute(
+        uint256 competition_id,
+        address token,
+        uint256 amount
+    ) external returns(bool){
+        require(token!=address(0), "Invalid token");
+        require(tokenIsPresent(competition_id, token), "No such token in competition");
+        require(competitions[competition_id].status==Status.Active, "Competition isn't active");
+        require(matchesLevelExtremes(competition_id, amount), "Amount doesn't match level minimum-maximum requirements");
+
+        uint256 competitor_id = getCompetitorId(competition_id, msg.sender);
+        if(competitor_id == competitions[competition_id].competitors.length){
+            competitions[competition_id].competitors.push(Competitor(
+                msg.sender,
+                0
+            ));
+            competitions[competition_id].competitor_indexes[msg.sender] = competitor_id;
+        }
+
+        uint256 token_usd_amount = tokenToUsd(competition_id, token, amount);
+        competitions[competition_id].competitors[competitor_id].value += token_usd_amount;
+
+        for (uint256 i = 0; i < competitions[competition_id].tokens.length; i++){
+            if(competitions[competition_id].tokens[i].token_address==token){
+                competitions[competition_id].tokens[i].value+=token_usd_amount;
+            }
+        }
+
+
+        emit Contributed(
+            msg.sender,
+            competition_id,
+            token,
+            amount,
+            token_usd_amount
+        );
+
+        return true;
+    }
+
     // Creates new competitions.
     function createCompetition(
         address[] memory tokens,
+        uint256[] memory token_usd_prices,
         uint256 start,
         uint256 end,
         uint256 reward_percentage,
@@ -55,7 +105,7 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         require(block.timestamp<end, "Can't create finished competition");
         require(reward_percentage>=0 && reward_percentage<=10000, "Reward must be between 0.00 and 100.00 (0-10000)");
         
-        Token[] memory newTokens = createTokens(tokens);
+        Token[] memory newTokens = createTokens(tokens, token_usd_prices);
         Level[] memory newLevels = createLevels(level_treshholds, level_minimums, level_maximums);
 
         Competition memory newCompetition = Competition({
@@ -76,7 +126,7 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         competitions[last_competitions_id] = newCompetition;
 
         // Emit event with details
-        emit competitionCreated(
+        emit CompetitionCreated(
             last_competitions_id,
             msg.sender,
             newCompetition.owner,
@@ -90,9 +140,80 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         return true;
     }
 
+    // Convert token amount to USD
+    function tokenToUsd(
+        uint256 competition_id,
+        address token,
+        uint256 amount
+    ) external returns(uint256){
+        Token[] tokens = competitions[competition_id].tokens;
+        bool found = false;
+        uint256 usd_amount = 0;
+        for (uint256 i = 0; i < tokens.length; i++){
+            if(tokens[i].token_address==token){
+                usd_amount = amount*tokens[i].token_usd_price;
+                found = true;
+            }
+        }
+        require(found, "Error while converting token to USD");
+
+        return usd_amount;
+    }
+
+    // Gets competitor id from the competition based on address
+    function getCompetitorId(
+        uint256 competition_id,
+        address competitor_address
+    ) external returns(uint256){
+        uint256 competitor_id = 0;
+
+        if(competitor_address!=competitions[competition_id].competitors[0].competitor_address){
+            if(competitions[competition_id].competitor_indexes[msg.sender]){
+                competitor_id = competitions[competition_id].competitor_indexes[competitor_address];
+            }else{
+                competitor_id = competitions[competition_id].competitors.length;
+            }
+        }
+
+        return competitor_id;
+    }
+
+    // Check if token is in competition
+    function tokenIsPresent(
+        uint256 competition_id,
+        address token
+    ) external returns(bool){
+        for (uint256 i = 0; i<competitions[competition_id].tokens.length; i++){
+            if(token == competition[competition_id].tokens[i].token_address){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Check if amount is in level min and max boundaries
+    function matchesLevelExtremes(
+        uint256 competition_id,
+        uint256 amount
+    ) external returns(bool){
+        for (uint256 i = 0; i < competitions[competition_id].levels.length; i++){
+            if(competitions[competition_id].levels[i].active){
+                if(
+                    amount >= competitions[competition_id].levels[i].minimum &&
+                    amount <= competitions[competition_id].levels[i].maximum
+                ){
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     // Creates array of Tokens, with value 0 for each.
     function createTokens(
-        address[] memory tokens
+        address[] memory tokens,
+        uint256[] memory token_usd_prices
     ) external returns(Token[]){
         require(tokens.length >= 2, "At least 2 tokens required");
         
@@ -100,7 +221,8 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         
         for (uint256 i = 0; i < tokens.length; i++){
             require(tokens[i]!=address(0), "Zero address can't be a token");
-            newTokens[i] = Token(tokens[i], 0);
+            require(token_usd_prices[i]!=0, "Token USD price can't be zero");
+            newTokens[i] = Token(tokens[i], token_usd_prices[i], 0);
         }
 
         return newTokens;
@@ -165,7 +287,7 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
 
         competitions[competition_id].status = Status(newStatus);
 
-        emit competitionStatusChanged(
+        emit CompetitionStatusChanged(
             competition_id,
             oldStatus,
             competitions[competition_id].status
@@ -196,7 +318,7 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         // New owner should start the competition
         competitions[competition_id].status = Status.Paused;
 
-        emit competitionOwnerChanged(
+        emit CompetitionOwnerChanged(
             competition_id,
             oldOwner,
             newOwner

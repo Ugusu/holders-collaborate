@@ -25,6 +25,7 @@ struct Token {
     */
     address token_address;
     uint256 token_usd_price;
+    uint256 value;
 }
 
 struct Competitor {
