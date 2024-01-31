@@ -26,10 +26,7 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         uint256 start,
         uint256 end,
         Level[] levels,
-        uint256 reward_percentage,
-        Competitor[] competitors,
-        uint256 total_usd,
-        Status status
+        uint256 reward_percentage
     );
 
     event competitionStatusChanged(
@@ -70,6 +67,7 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
             levels: newLevels,
             reward_percentage: reward_percentage,
             competitors: new Competitor[](0),
+            competitor_indexes: new mapping(address => uint256),
             total_usd: 0,
             status: Status.Upcoming
         });
@@ -86,10 +84,7 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
             newCompetition.start,
             newCompetition.end,
             newCompetition.levels,
-            newCompetition.reward_percentage,
-            newCompetition.competitors,
-            newCompetition.total_usd,
-            newCompetition.status
+            newCompetition.reward_percentage
         );
 
         return true;

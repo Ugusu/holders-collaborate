@@ -67,6 +67,7 @@ struct Competition {
     Level[] levels;
     uint256 reward_percentage;
     Competitor[] competitors;
+    mapping(address=>uint256) competitor_indexes;
     uint256 total_usd;
     Status status;
 }
