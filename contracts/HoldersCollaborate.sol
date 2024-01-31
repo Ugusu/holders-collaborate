@@ -139,13 +139,27 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         return newLevels;
     }
 
+    // Changes status of the competition
     function changeCompetitionStatus(
         uint256 competition_id,
-        uint256 status
+        uint256 newStatus
     ) external returns(bool){
-        require(status >= uint256(Status.Upcoming) && status <= uint256(Status.Finished), "Invalid status value, must be between 0 and 3");
+        require(newStatus >= uint256(Status.Upcoming) && status <= uint256(Status.Finished), "Invalid status value, must be between 0 and 3");
         Status oldStatus = competitions[competition_id].status;
-        competitions[competition_id].status = Status(status);
+        
+        if(block.timestamp>end && oldStatus==Status.Finished){
+            revert("Competition has already finished");
+        }
+
+        if (newStatus==uint256(Status.Finished)){
+            require(block.timestamp>=end, "Can't finish competition before end time");
+        }
+
+        if(newStatus==uint256(Status.Active)){
+            require(block.timestamp>=start, "Can't start compatition before start time");
+        }
+
+        competitions[competition_id].status = Status(newStatus);
 
         emit competitionStatusChanged(
             competition_id,
@@ -154,6 +168,14 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         );
 
         return true;
+    }
+
+    // Changes the owner of the competition
+    function changeCompetitionOwner(
+        uint256 competition_id,
+        address newOwner
+    ) external returns(bool){
+
     }
 
     function setAdmin(address admin, bool value) public override onlyOwner {
