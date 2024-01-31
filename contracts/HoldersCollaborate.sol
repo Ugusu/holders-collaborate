@@ -152,10 +152,9 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
     ) external returns(bool){
         require(newStatus >= uint256(Status.Upcoming) && status <= uint256(Status.Finished), "Invalid status value, must be between 0 and 3");
         Status oldStatus = competitions[competition_id].status;
-        
-        if(block.timestamp>end && oldStatus==Status.Finished){
-            revert("Competition has already finished");
-        }
+
+        require(block.timestamp<end, "Competition has already finished");
+        require(oldStatus!=Status.Finished, "Competition has already finished");
 
         if (newStatus==uint256(Status.Finished)){
             require(block.timestamp>=end, "Can't finish competition before the end time");
@@ -163,6 +162,10 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
 
         if(newStatus==uint256(Status.Active)){
             require(block.timestamp>=start, "Can't start competition before the start time");
+        }
+
+        if(newStatus==uint256(Status.Upcoming)){
+            require(block.timestamp<start, "Can't declare upcoming after the start time");
         }
 
         competitions[competition_id].status = Status(newStatus);
@@ -194,6 +197,8 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
 
         address oldOwner = competitions[competition_id].owner;
         competitions[competition_id].owner = newOwner;
+
+        // New owner should start the competition
         competitions[competition_id].status = Status.Paused;
 
         emit competitionOwnerChanged(
