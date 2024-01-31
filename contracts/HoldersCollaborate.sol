@@ -38,6 +38,12 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         Status newStatus
     );
 
+    event competitionOwnerChanged(
+        uint256 competitions_id,
+        address oldOwner,
+        address newOwner
+    );
+
     // Creates new competitions.
     function createCompetition(
         address[] memory tokens,
@@ -152,11 +158,11 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         }
 
         if (newStatus==uint256(Status.Finished)){
-            require(block.timestamp>=end, "Can't finish competition before end time");
+            require(block.timestamp>=end, "Can't finish competition before the end time");
         }
 
         if(newStatus==uint256(Status.Active)){
-            require(block.timestamp>=start, "Can't start compatition before start time");
+            require(block.timestamp>=start, "Can't start competition before the start time");
         }
 
         competitions[competition_id].status = Status(newStatus);
@@ -175,7 +181,28 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         uint256 competition_id,
         address newOwner
     ) external returns(bool){
+        require(msg.sender==competitions[competition_id].owner, "Only owner can change owner");
+        
+        require(
+            competitions[competition_id].status==Status.Upcoming ||
+            competitions[competition_id].status==Status.Paused,
+            "Can't change owner of active or finished competition"
+        );
 
+        require(newOwner!=address(0), "Can't asing zero address as owner");
+        require(newOwner!=competitions[competition_id].owner, "Address is already owner");
+
+        address oldOwner = competitions[competition_id].owner;
+        competitions[competition_id].owner = newOwner;
+        competitions[competition_id].status = Status.Paused;
+
+        emit competitionOwnerChanged(
+            competition_id,
+            oldOwner,
+            newOwner
+        );
+
+        return true;
     }
 
     function setAdmin(address admin, bool value) public override onlyOwner {
