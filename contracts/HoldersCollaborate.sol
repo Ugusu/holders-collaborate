@@ -32,6 +32,12 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         Status status
     );
 
+    event competitionStatusChanged(
+        uint256 competitions_id,
+        Status oldStatus,
+        Status newStatus
+    );
+
     // Creates new competitions.
     function createCompetition(
         address[] memory tokens,
@@ -131,6 +137,23 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         newLevels[0].active=true;
 
         return newLevels;
+    }
+
+    function changeCompetitionStatus(
+        uint256 competition_id,
+        uint256 status
+    ) external returns(bool){
+        require(status >= uint256(Status.Upcoming) && status <= uint256(Status.Finished), "Invalid status value, must be between 0 and 3");
+        Status oldStatus = competitions[competition_id].status;
+        competitions[competition_id].status = Status(status);
+
+        emit competitionStatusChanged(
+            competition_id,
+            oldStatus,
+            competitions[competition_id].status
+        );
+
+        return true;
     }
 
     function setAdmin(address admin, bool value) public override onlyOwner {
