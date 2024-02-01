@@ -114,7 +114,7 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
             start,
             end,
             levels,
-            reward_percentage
+            reward
         );
 
         return true;
