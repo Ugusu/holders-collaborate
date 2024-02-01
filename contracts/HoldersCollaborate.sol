@@ -83,43 +83,6 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         return true;
     }
 
-    // Creates new competitions.
-    function createCompetition(
-        address[] memory tokens_addresses,
-        uint256[] memory token_usd_prices,
-        uint256 start_timestamp,
-        uint256 end_timestamp,
-        uint256 reward_percentage,
-        uint256[] memory level_treshholds,
-        uint256[] memory level_minimums,
-        uint256[] memory level_maximums
-    ) public returns(bool){
-        require(!competitionAlreadyCreated, "Competition already created");
-        require(block.timestamp<start, "Can't create competition in the past");
-        require(block.timestamp<end, "Can't create finished competition");
-        require(reward_percentage>=0 && reward_percentage<=10000, "Reward must be between 0.00 and 100.00 (0-10000)");
-        
-        createTokens(tokens_addresses, token_usd_prices);
-        createLevels(level_treshholds, level_minimums, level_maximums);
-        start = start_timestamp;
-        end = end_timestamp;
-        reward = reward_percentage;
-
-
-        competitionAlreadyCreated = true;
-
-        // Emit event with details
-        emit CompetitionCreated(
-            tokens,
-            start,
-            end,
-            levels,
-            reward
-        );
-
-        return true;
-    }
-
     // Convert token amount to USD
     function tokenToUsd(
         address token,
@@ -171,7 +134,7 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
     // Changes status of the competition
     function changeCompetitionStatus(
         uint256 newStatus
-    ) public returns(bool){
+    ) public onlyOwner returns(bool){
         require(newStatus >= uint256(Status.Upcoming) && uint256(status) <= uint256(Status.Finished), "Invalid status value, must be between 0 and 3");
         Status oldStatus = status;
 
@@ -321,6 +284,44 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         uint256 level_order
     ) public view returns(uint256) {
         return levels[level_order].treshhold;
+    }
+
+    // One time functions
+    // Creates new competitions.
+    function createCompetition(
+        address[] memory tokens_addresses,
+        uint256[] memory token_usd_prices,
+        uint256 start_timestamp,
+        uint256 end_timestamp,
+        uint256 reward_percentage,
+        uint256[] memory level_treshholds,
+        uint256[] memory level_minimums,
+        uint256[] memory level_maximums
+    ) public onlyOwner returns(bool){
+        require(!competitionAlreadyCreated, "Competition already created");
+        require(block.timestamp<start, "Can't create competition in the past");
+        require(block.timestamp<end, "Can't create finished competition");
+        require(reward_percentage>=0 && reward_percentage<=10000, "Reward must be between 0.00 and 100.00 (0-10000)");
+        
+        createTokens(tokens_addresses, token_usd_prices);
+        createLevels(level_treshholds, level_minimums, level_maximums);
+        start = start_timestamp;
+        end = end_timestamp;
+        reward = reward_percentage;
+
+
+        competitionAlreadyCreated = true;
+
+        // Emit event with details
+        emit CompetitionCreated(
+            tokens,
+            start,
+            end,
+            levels,
+            reward
+        );
+
+        return true;
     }
 
     // Creates array of Tokens, with value 0 for each.
