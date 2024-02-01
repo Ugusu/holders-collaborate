@@ -6,7 +6,28 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Level, Token, Status, Competitor} from "./Elements.sol";
 
 contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
-    constructor() {}
+    constructor(
+        address[] memory tokens_addresses,
+        uint256[] memory token_usd_prices,
+        uint256 start_timestamp,
+        uint256 end_timestamp,
+        uint256 reward_percentage,
+        uint256[] memory level_treshholds,
+        uint256[] memory level_minimums,
+        uint256[] memory level_maximums
+    ) {
+        require(block.timestamp<start_timestamp, "Can't create competition in the past");
+        require(start_timestamp<end_timestamp, "End time should be after start time");
+        require(reward_percentage>=0 && reward_percentage<=10000, "Reward must be between 0.00 and 100.00 (0-10000)");
+        
+        createTokens(tokens_addresses, token_usd_prices);
+        createLevels(level_treshholds, level_minimums, level_maximums);
+        start = start_timestamp;
+        end = end_timestamp;
+        reward = reward_percentage;
+
+        competitionAlreadyCreated = true;
+    }
 
     bool competitionAlreadyCreated = false;
     
@@ -52,7 +73,7 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         require(token!=address(0), "Invalid token");
         require(tokenIsPresent(token), "No such token in competition");
         require(status==Status.Active, "Competition isn't active");
-        require(matchesLevelExtremes(amount), "Amount doesn't match level minimum-maximum requirements");
+        require(matchesLevelExtremes(token, amount), "Amount doesn't match level minimum-maximum requirements");
 
         uint256 competitor_id = getCompetitorId(msg.sender);
         if(competitor_id == competitors.length){
@@ -115,15 +136,20 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
 
     // Check if amount is in level min and max boundaries
     function matchesLevelExtremes(
+        address token_address,
         uint256 amount
     ) public view returns(bool){
-        for (uint256 i = 0; i < levels.length; i++){
-            if(levels[i].active){
-                if(
-                    amount >= levels[i].minimum &&
-                    amount <= levels[i].maximum
-                ){
-                    return true;
+        for (uint256 i = 0; i < tokens.length; i++){
+            if(tokens[i].token_address == token_address){
+                for (uint256 j = 0; j < tokens.length; j++){
+                    if(tokens[i].value >= levels[j].treshhold){
+                        if(
+                            amount >= levels[i].minimum &&
+                            amount <= levels[i].maximum
+                        ){
+                            return true;
+                        }
+                    }
                 }
             }
         }
@@ -254,10 +280,16 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         return levels;
     }
 
-    function getActiveLevel() public view returns(Level memory){
-        for (uint256 i = 0; i < levels.length; i++){
-            if(levels[i].active){
-                return levels[i];
+    function getActiveLevel(
+        address token_address
+    ) public view returns(Level memory){
+        for (uint256 i = 0; i < tokens.length; i++){
+            if(tokens[i].token_address == token_address){
+                for (uint256 j = 0; j < tokens.length; j++){
+                    if(tokens[i].value >= levels[j].treshhold){
+                        return levels[j];
+                    }
+                }
             }
         }
     }
@@ -287,48 +319,12 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
     }
 
     // One time functions
-    // Creates new competitions.
-    function createCompetition(
-        address[] memory tokens_addresses,
-        uint256[] memory token_usd_prices,
-        uint256 start_timestamp,
-        uint256 end_timestamp,
-        uint256 reward_percentage,
-        uint256[] memory level_treshholds,
-        uint256[] memory level_minimums,
-        uint256[] memory level_maximums
-    ) public onlyOwner returns(bool){
-        require(!competitionAlreadyCreated, "Competition already created");
-        require(block.timestamp<start, "Can't create competition in the past");
-        require(block.timestamp<end, "Can't create finished competition");
-        require(reward_percentage>=0 && reward_percentage<=10000, "Reward must be between 0.00 and 100.00 (0-10000)");
-        
-        createTokens(tokens_addresses, token_usd_prices);
-        createLevels(level_treshholds, level_minimums, level_maximums);
-        start = start_timestamp;
-        end = end_timestamp;
-        reward = reward_percentage;
-
-
-        competitionAlreadyCreated = true;
-
-        // Emit event with details
-        emit CompetitionCreated(
-            tokens,
-            start,
-            end,
-            levels,
-            reward
-        );
-
-        return true;
-    }
 
     // Creates array of Tokens, with value 0 for each.
     function createTokens(
         address[] memory tokens_addresses,
         uint256[] memory token_usd_prices
-    ) public returns(bool){
+    ) public onlyOwner returns(bool){
         require(!competitionAlreadyCreated, "Competition already created");
         require(tokens_addresses.length >= 2, "At least 2 tokens required");
         
@@ -347,7 +343,7 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         uint256[] memory level_treshholds,
         uint256[] memory level_minimums,
         uint256[] memory level_maximums
-    ) public returns(bool){
+    ) public onlyOwner returns(bool){
         require(!competitionAlreadyCreated, "Competition already created");
         require(level_treshholds.length >= 1, "At least one level is required");
         require(
@@ -359,18 +355,17 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         for (uint256 i = 0; i < level_treshholds.length; i++){
             if (i > 0){
                 require(level_treshholds[i]>level_treshholds[i-1], "Next level must have higher treshhold than previous");
+            }else{
+                level_treshholds[0] = 0;
             }
             require(level_minimums[i]<=level_maximums[i], "Level minimum must be lower or equal to level maximum");
 
             levels.push(Level(
-                i,
                 level_treshholds[i],
                 level_minimums[i],
-                level_maximums[i],
-                false
+                level_maximums[i]
             ));
         }
-        levels[0].active=true;
 
         return true;
     }
