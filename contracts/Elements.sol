@@ -11,7 +11,7 @@ struct Level {
             active - if the level is currently active
     */
     uint256 order;
-    uint256 threshold;
+    uint256 treshhold;
     uint256 minimum;
     uint256 maximum;
     bool active;
@@ -60,8 +60,6 @@ struct Competition {
             total_usd - current total USD value of the competition
             status - status of the competition (Upcoming, Active, Paused, Finished)
     */
-    address creator;
-    address owner;
     Token[] tokens;
     uint256 start;
     uint256 end;
