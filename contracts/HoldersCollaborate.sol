@@ -276,10 +276,13 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
     function getCompetitorId(address competitorAddress) public view returns (uint256) {
         uint256 competitorId = 0;
 
+        // Check if the address is the first competitor
         if (competitorAddress != competitors[0].competitorAddress) {
             if (competitorIndexes[competitorAddress] > 0) {
+                // If mapping address -> value higher than 0 (default), existing competitior
                 competitorId = competitorIndexes[competitorAddress];
             } else {
+                // If it's 0, then it's default and it's a new competitor (exception: fisrt competitor - alredy checked)
                 competitorId = competitors.length;
             }
         }
