@@ -117,27 +117,41 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
     function matchesLevelExtremes(address tokenAddress, uint256 amount) public view returns (bool) {
         uint256 tokenValue = 0;
         uint256 amountUsd = tokenToUsd(tokenAddress, amount);
-        // find the value of the token if it exists
+        uint256 currentLevel = 0;
+
+        // find the value of the token
         for (uint256 i = 0; i < tokens.length; i++) {
             if (tokens[i].tokenAddress == tokenAddress) {
                 tokenValue = tokens[i].value;
             }
         }
 
-        // check if the amount is in the level boundaries
+        // Get current level's id
         for (uint256 i = 0; i < levels.length; i++) {
-            if (tokenValue <= levels[i].treshhold) {
-                if (amountUsd >= levels[i].minimum && amountUsd <= levels[i].maximum) {
-                    return true;
-                }
+            if (currentLevel == 0 && tokenValue < levels[i].treshhold) {
+                currentLevel = i + 1;
             }
         }
 
-        // if last level, if current value + contribute value less equals last level treshhold + it's minumum, allowed
-        if (
-            tokenValue < levels[levels.length - 1].treshhold &&
-            tokenValue + amountUsd <= levels[levels.length - 1].treshhold + levels[levels.length - 1].minimum
-        ) {
+        // Means value higher than last level treshhold or equal
+        if (currentLevel == 0) {
+            return false;
+        }
+
+        currentLevel--;
+
+        // Check if value is in extremes
+        if (amountUsd < levels[currentLevel].minimum && amountUsd > levels[currentLevel].maximum) {
+            return false;
+        }
+
+        // If not last level, or if total is within than treshhold, allowed
+        if (currentLevel + 1 != levels.length || tokenValue + amountUsd <= levels[currentLevel].treshhold) {
+            return true;
+        }
+
+        // If total more than last level treshhold, but less than treshhold + minimum, allowed
+        if (tokenValue + amountUsd <= levels[currentLevel].treshhold + levels[currentLevel].minimum) {
             return true;
         }
 
@@ -321,6 +335,7 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
                 return levels[i];
             }
         }
+        return levels[levels.length - 1];
     }
 
     function getLevel(uint256 levelOrder) public view returns (Level memory) {
