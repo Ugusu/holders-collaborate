@@ -41,7 +41,6 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
     uint256 public start = 0;
     uint256 public end = 0;
     uint256 public reward = 0;
-    uint256 public totalUsd = 0;
 
     Status public status = Status.Upcoming;
 
@@ -312,6 +311,16 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
 
     function getLevelTreshhold(uint256 levelOrder) public view returns (uint256) {
         return levels[levelOrder].treshhold;
+    }
+
+    function getTotalValue() public view returns (uint256) {
+        uint256 totalValue = 0;
+        
+        for (uint256 i = 0; i < tokens.length; i++) {
+            totalValue += tokens[i].value;
+        }
+
+        return totalValue;
     }
 
     // One time functions
