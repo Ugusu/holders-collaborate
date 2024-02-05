@@ -45,14 +45,6 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
     Status public status = Status.Upcoming;
 
     // EVENTS
-    event CompetitionCreated(
-        Token[] tokens,
-        uint256 start,
-        uint256 end,
-        Level[] levels,
-        uint256 rewardPercentage
-    );
-
     event CompetitionStatusChanged(
         Status oldStatus,
         Status newStatus
@@ -231,26 +223,6 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         return competitors[competitor_id];
     }
 
-    function getCurrentStatus() public view returns(Status){
-        return status;
-    }
-
-    function getStart() public view returns(uint256){
-        return start;
-    }
-
-    function getEnd() public view returns(uint256){
-        return end;
-    }
-
-    function getRewardPercentage() public view returns(uint256){
-        return reward;
-    }
-
-    function getTotalValue() public view returns(uint256){
-        return total_usd;
-    }
-
     function getTokenValue(
         address token_address
     ) public view returns(uint256) {
@@ -260,10 +232,6 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
             }
         }
         return 0;
-    }
-
-    function getTokens() public view returns(Token[] memory){
-        return tokens;
     }
 
     function getToken(
@@ -276,20 +244,18 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         }
     }
 
-    function getLevels() public view returns(Level[] memory){
-        return levels;
-    }
-
     function getActiveLevel(
         address token_address
     ) public view returns(Level memory){
+        uint256 tokenValue = 0;
         for (uint256 i = 0; i < tokens.length; i++){
             if(tokens[i].token_address == token_address){
-                for (uint256 j = 0; j < tokens.length; j++){
-                    if(tokens[i].value >= levels[j].treshhold){
-                        return levels[j];
-                    }
-                }
+                tokenValue = tokens[i].value;
+            }
+        }
+        for (uint256 i = 0; i < levels.length; i++){
+            if(tokenValue<= levels[i].treshhold){
+                return levels[i];
             }
         }
     }
