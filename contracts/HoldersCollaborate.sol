@@ -315,7 +315,7 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
 
     function getTotalValue() public view returns (uint256) {
         uint256 totalValue = 0;
-        
+
         for (uint256 i = 0; i < tokens.length; i++) {
             totalValue += tokens[i].value;
         }
@@ -324,7 +324,6 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
     }
 
     // One time functions
-
     // Creates array of Tokens, with value 0 for each.
     function createTokens(
         address[] memory tokensAddresses,
@@ -357,7 +356,10 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         );
 
         for (uint256 i = 0; i < levelsTreshholds.length; i++) {
-            require(levelsTreshholds[i] > levelsTreshholds[i - 1], "Next level must have higher treshhold than previous");
+            require(
+                levelsTreshholds[i] > levelsTreshholds[i - 1],
+                "Next level must have higher treshhold than previous"
+            );
             require(levelsMinimums[i] <= levelsMaximums[i], "Level minimum must be lower or equal to level maximum");
 
             levels.push(Level(levelsTreshholds[i], levelsMinimums[i], levelsMaximums[i]));
