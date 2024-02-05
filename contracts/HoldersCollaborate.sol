@@ -47,7 +47,17 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
     // EVENTS
     event CompetitionCreated(Token[] tokens, uint256 start, uint256 end, Level[] levels, uint256 rewardPercentage);
 
-    event CompetitionStatusChanged(Status oldStatus, Status newStatus);
+    event StatusChanged(Status oldStatus, Status newStatus);
+
+    event LevelsChanged(Level[] oldLevels, Level[] newLevels);
+
+    event TokensChanged(Token[] oldTokens, Token[] newTokens);
+
+    event RewardPercentageChanged(uint256 oldRewardPercentage, uint256 newRewardPercentage);
+
+    event StartEndTimeChanged(uint256 oldStart, uint256 oldEnd, uint256 newStart, uint256 newEnd);
+
+    event LevelAdded(Level newLevel);
 
     event Contributed(address competitor, address token, uint256 amount, uint256 usdAmount);
 
@@ -135,7 +145,7 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
     }
 
     // Changes status of the competition
-    function changeCompetitionStatus(uint256 newStatus) public onlyOwner returns (bool) {
+    function changeStatus(uint256 newStatus) public onlyOwner returns (bool) {
         require(
             newStatus >= uint256(Status.Upcoming) && uint256(status) <= uint256(Status.Finished),
             "Invalid status value, must be between 0 and 3"
@@ -159,7 +169,7 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
 
         status = Status(newStatus);
 
-        emit CompetitionStatusChanged(oldStatus, status);
+        emit StatusChanged(oldStatus, status);
 
         return true;
     }
@@ -173,9 +183,12 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         require(block.timestamp < start, "Can't change existing levels after start time");
 
         competitionAlreadyCreated = false;
+        Level[] memory oldLevels = levels;
         delete levels;
         createLevels(levelsTreshholds, levelsMinimums, levelsMaximums);
         competitionAlreadyCreated = true;
+
+        emit LevelsChanged(oldLevels, levels);
 
         return true;
     }
@@ -188,9 +201,12 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         require(block.timestamp < start, "Can't change tokens after start time");
 
         competitionAlreadyCreated = false;
+        Token[] memory oldTokens = tokens;
         delete tokens;
         createTokens(tokensAddresses, tokenUsdPrices);
         competitionAlreadyCreated = true;
+
+        emit TokensChanged(oldTokens, tokens);
 
         return true;
     }
@@ -199,7 +215,10 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
     function changeRewardPercentage(uint256 rewardPercentage) public onlyOwner returns (bool) {
         require(block.timestamp < start, "Can't change reward after start time");
 
+        uint256 oldReward = reward;
         reward = rewardPercentage;
+
+        emit RewardPercentageChanged(oldReward, reward);
 
         return true;
     }
@@ -208,8 +227,13 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
     function changeStartEndTime(uint256 startTimestamp, uint256 endTimestamp) public onlyOwner returns (bool) {
         require(block.timestamp < start, "Can't change start and end times after start time");
 
+        uint256 oldStart = start;
+        uint256 oldEnd = end;
+
         start = startTimestamp;
         end = endTimestamp;
+
+        emit StartEndTimeChanged(oldStart, oldEnd, start, end);
 
         return true;
     }
@@ -228,6 +252,8 @@ contract HoldersCollaborate is Admin(msg.sender), Ownable(msg.sender) {
         require(levelMinimum <= levelMaximum, "Level minimum must be lower or equal to level maximum");
 
         levels.push(Level(levelTreshhold, levelMinimum, levelMaximum));
+
+        emit LevelAdded(levels[levels.length - 1]);
 
         return true;
     }
