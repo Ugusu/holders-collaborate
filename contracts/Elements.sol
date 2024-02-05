@@ -10,11 +10,9 @@ struct Level {
             maximum - maximum contribution value
             active - if the level is currently active
     */
-    uint256 order;
     uint256 treshhold;
     uint256 minimum;
     uint256 maximum;
-    bool active;
 }
 
 struct Token {
@@ -23,8 +21,8 @@ struct Token {
             token_address - address of the token
             token_usd_price - usd price of the token on create
     */
-    address token_address;
-    uint256 token_usd_price;
+    address tokenAddress;
+    uint256 tokenUsdPrice;
     uint256 value;
 }
 
@@ -34,7 +32,7 @@ struct Competitor {
             competitior_address - address of competitor/contributor user
             value - value contributed in usd
     */
-    address competitor_address;
+    address competitorAddress;
     uint256 value;
 }
 
@@ -64,9 +62,9 @@ struct Competition {
     uint256 start;
     uint256 end;
     Level[] levels;
-    uint256 reward_percentage;
+    uint256 rewardPercentage;
     Competitor[] competitors;
-    mapping(address=>uint256) competitor_indexes;
-    uint256 total_usd;
+    mapping(address => uint256) competitorIndexes;
+    uint256 totalUsd;
     Status status;
 }
