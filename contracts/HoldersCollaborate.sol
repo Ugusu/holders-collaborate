@@ -94,7 +94,6 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
         uint256[] memory levelsMaximums,
         uint256[] memory levelsRewards
     ) public onlyOwner returns (bool) {
-        require(block.timestamp < start, "Can't change existing levels after start time");
         require(
             levelsOrders.length == levelsTreshholds.length &&
                 levelsOrders.length == levelsMinimums.length &&
@@ -112,6 +111,7 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
 
         for (uint256 i = 0; i < levelsOrders.length; i++) {
             if (levelsOrders[i] < oldLevels.length) {
+                require(block.timestamp < start, "Can't change existing levels after start time");
                 levels[levelsOrders[i]].treshhold = levelsTreshholds[i];
                 levels[levelsOrders[i]].minimum = levelsMinimums[i];
                 levels[levelsOrders[i]].maximum = levelsMaximums[i];
