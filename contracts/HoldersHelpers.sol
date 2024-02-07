@@ -93,12 +93,16 @@ contract HoldersHelpers is HoldersDatabase, Admin(msg.sender), Ownable(msg.sende
 
         for (uint256 i = 0; i < levelsOrders.length; i++) {
             require(levelsMinimums[i] > levelsMaximums[i], "Level minimums must be lower or equal to level maximums");
-            if (levelsOrders[i] < levels.length) {
+            if (levelsOrders[i] < levels.length - 1) {
+                // If the order smaller than the order of the existing last level,
+                // the treshhold and reward must be higher than all level values before that level.
                 for (uint256 j = 0; j < levelsOrders[i]; j++) {
                     require(levels[j].treshhold < levelsTreshholds[i], "Higher levels must have higher treshholds");
                     require(levels[j].reward < levelsRewards[i], "Higher levels must have higher reward");
                 }
             } else {
+                // If the order is higher thatn last level's order,
+                // it's values must be higher than all exiting level values.
                 for (uint256 j = 0; j < levels.length; j++) {
                     require(levels[j].treshhold < levelsTreshholds[i], "Higher levels must have higher treshholds");
                     require(levels[j].reward < levelsRewards[i], "Higher levels must have higher reward");
@@ -106,25 +110,28 @@ contract HoldersHelpers is HoldersDatabase, Admin(msg.sender), Ownable(msg.sende
             }
 
             for (uint256 j = 0; j < levelsOrders.length; j++) {
+                // In input values, higher levels must have higher values.
                 if (levelsOrders[i] > levelsOrders[j]) {
                     require(levelsTreshholds[i] > levelsTreshholds[j], "Higher levels must have higher treshholds");
                     require(levelsRewards[i] > levelsRewards[j], "Higher levels must have higher reward");
                 }
-
+                // In input values, lower levels must have lower values.
                 if (levelsOrders[i] < levelsOrders[j]) {
                     require(levelsTreshholds[i] < levelsTreshholds[j], "Higher levels must have higher treshholds");
                     require(levelsRewards[i] < levelsRewards[j], "Higher levels must have higher reward");
                 }
             }
 
+            // Detect level, which will be last after the update (or existing last level reward increase).
             if (levelsOrders[i] >= levels.length - 1 && levelsOrders[i] > levelsOrders[lastLevelOrderIndex]) {
                 lastLevelOrderIndex = i;
             }
         }
 
+        // Check the balance requirement for the new last level.
         if (levelsOrders[lastLevelOrderIndex] >= levels.length) {
             require(
-                checkBalancesForNewLevel(
+                checkBalances(
                     levelsTreshholds[lastLevelOrderIndex],
                     levelsMinimums[lastLevelOrderIndex],
                     levelsRewards[lastLevelOrderIndex]
@@ -137,24 +144,19 @@ contract HoldersHelpers is HoldersDatabase, Admin(msg.sender), Ownable(msg.sende
     }
 
     // Check contract balance before collaboration start
-    function checkBalances() public view returns (bool) {
-        Level memory lastLevel = levels[levels.length - 1];
-        uint256 requiredAmountUsd = (lastLevel.treshhold + lastLevel.minimum) * lastLevel.reward;
-
-        return _checkBalance(requiredAmountUsd);
-    }
-
-    function checkBalancesForNewLevel(
+    function checkBalances(
         uint256 levelTreshhold,
         uint256 levelMinimum,
         uint256 levelReward
     ) public view returns (bool) {
-        uint256 requiredAmountUsd = (levelTreshhold + levelMinimum) * levelReward;
+        uint256 requiredAmountUsd = ((levelTreshhold + levelMinimum) * levelReward) / 10000;
 
-        return _checkBalance(requiredAmountUsd);
-    }
+        // Ceil
+        if (((levelTreshhold + levelMinimum) * levelReward) % 10000 != 0) {
+            requiredAmountUsd++;
+        }
 
-    function _checkBalance(uint256 requiredAmountUsd) internal view returns (bool) {
+        // Iterate over tokens and check balance for each.
         for (uint256 i = 0; i < tokens.length; i++) {
             ERC20 tokenContract = ERC20(tokens[i].tokenAddress);
 

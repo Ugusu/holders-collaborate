@@ -26,7 +26,7 @@ contract HoldersDatabase {
 
     event RewardPercentageChanged(uint256 oldRewardPercentage, uint256 newRewardPercentage);
 
-    event StartEndTimeChanged(uint256 oldStart, uint256 oldEnd, uint256 newStart, uint256 newEnd);
+    event StartEndTimeUpdated(uint256 oldStart, uint256 oldEnd, uint256 newStart, uint256 newEnd);
 
     event LevelAdded(Level newLevel);
 

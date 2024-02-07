@@ -69,8 +69,10 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
 
         if (newStatus == uint256(Status.Active)) {
             require(block.timestamp >= start, "Can't start collaboration before the start time");
+
+            Level memory lastLevel = levels[levels.length - 1];
             require(
-                checkBalances(),
+                checkBalances(lastLevel.treshhold, lastLevel.minimum, lastLevel.reward),
                 "Minimum balance for all tokens must meet last level goal + last level minimum with reward"
             );
         }
@@ -110,7 +112,9 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
         Level[] memory oldLevels = levels;
 
         for (uint256 i = 0; i < levelsOrders.length; i++) {
-            if (levelsOrders[i] < oldLevels.length) {
+            // If the order lower than existing last level order, update
+            // otherwise add new level as last level
+            if (levelsOrders[i] < oldLevels.length - 1) {
                 require(block.timestamp < start, "Can't change existing levels after start time");
                 levels[levelsOrders[i]].treshhold = levelsTreshholds[i];
                 levels[levelsOrders[i]].minimum = levelsMinimums[i];
@@ -156,7 +160,7 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
     }
 
     // Changes start and end time
-    function changeStartEndTime(uint256 startTimestamp, uint256 endTimestamp) public onlyOwner returns (bool) {
+    function updateStartEndTime(uint256 startTimestamp, uint256 endTimestamp) public onlyOwner returns (bool) {
         require(block.timestamp < start, "Can't change start and end times after start time");
         require(startTimestamp < endTimestamp, "End time should be after start time");
 
@@ -166,7 +170,7 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
         start = startTimestamp;
         end = endTimestamp;
 
-        emit StartEndTimeChanged(oldStart, oldEnd, start, end);
+        emit StartEndTimeUpdated(oldStart, oldEnd, start, end);
 
         return true;
     }
@@ -184,7 +188,7 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
         );
         require(levelMinimum <= levelMaximum, "Level minimum must be lower or equal to level maximum");
         require(
-            checkBalancesForNewLevel(levelTreshhold, levelMinimum, levelMaximum),
+            checkBalances(levelTreshhold, levelMinimum, levelMaximum),
             "Higher balance required for the last level"
         );
 
