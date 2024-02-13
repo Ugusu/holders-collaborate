@@ -13,6 +13,7 @@ struct Level {
     uint256 treshhold;
     uint256 minimum;
     uint256 maximum;
+    uint256 reward;
 }
 
 struct Token {

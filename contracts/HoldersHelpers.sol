@@ -93,6 +93,10 @@ contract HoldersHelpers is HoldersDatabase, Admin(msg.sender), Ownable(msg.sende
 
         for (uint256 i = 0; i < levelsOrders.length; i++) {
             require(levelsMinimums[i] > levelsMaximums[i], "Level minimums must be lower or equal to level maximums");
+            require(
+                levelsRewards[i] >= 0 && levelsRewards[i] <= 10000,
+                "Reward must be between 0.00 and 100.00 (0-10000)"
+            );
             if (levelsOrders[i] < levels.length - 1) {
                 // If the order smaller than the order of the existing last level,
                 // the treshhold and reward must be higher than all level values before that level.
