@@ -153,7 +153,7 @@ contract HoldersHelpers is HoldersDatabase, Admin(msg.sender), Ownable(msg.sende
         uint256 levelMinimum,
         uint256 levelReward
     ) public view returns (bool) {
-        uint256 requiredAmountUsd = ((levelTreshhold + levelMinimum) * levelReward) / 10000;
+        uint256 requiredAmountUsd = ((levelTreshhold + levelMinimum) * levelReward * (tokens.length-1)) / 10000;
 
         // Ceil
         if (((levelTreshhold + levelMinimum) * levelReward) % 10000 != 0) {
