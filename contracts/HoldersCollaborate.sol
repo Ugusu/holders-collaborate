@@ -114,7 +114,7 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
         for (uint256 i = 0; i < levelsOrders.length; i++) {
             // If the order lower than existing last level order, update
             // otherwise add new level as last level
-            if (levelsOrders[i] < oldLevels.length - 1) {
+            if (levelsOrders[i] < oldLevels.length) {
                 require(block.timestamp < start, "Can't change existing levels after start time");
                 levels[levelsOrders[i]].treshhold = levelsTreshholds[i];
                 levels[levelsOrders[i]].minimum = levelsMinimums[i];

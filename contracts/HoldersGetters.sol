@@ -10,7 +10,7 @@ contract HoldersGetters is HoldersDatabase {
         uint256 competitorId = 0;
 
         // Check if the address is the first competitor
-        if (competitorAddress != competitors[0].competitorAddress) {
+        if (competitors.length>0 && competitorAddress != competitors[0].competitorAddress) {
             if (competitorIndexes[competitorAddress] > 0) {
                 // If mapping address -> value higher than 0 (default), existing competitior
                 competitorId = competitorIndexes[competitorAddress];

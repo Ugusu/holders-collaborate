@@ -92,7 +92,7 @@ contract HoldersHelpers is HoldersDatabase, Admin(msg.sender), Ownable(msg.sende
         uint256 lastLevelOrderIndex = 0;
 
         for (uint256 i = 0; i < levelsOrders.length; i++) {
-            require(levelsMinimums[i] > levelsMaximums[i], "Level minimums must be lower or equal to level maximums");
+            require(levelsMinimums[i] <= levelsMaximums[i], "Level minimums must be lower or equal to level maximums");
             require(
                 levelsRewards[i] >= 0 && levelsRewards[i] <= 10000,
                 "Reward must be between 0.00 and 100.00 (0-10000)"
