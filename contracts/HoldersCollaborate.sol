@@ -8,8 +8,8 @@ import "./HoldersHelpers.sol";
 
 contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
     constructor(Token[] memory newTokens, Level[] memory newLevels, uint256 startTimestamp, uint256 endTimestamp) {
-        require(block.timestamp < startTimestamp, "Can't create collaboration in the past");
-        require(startTimestamp < endTimestamp, "End time should be after start time");
+        require(block.timestamp < startTimestamp, "HoldersCollaborate: start in past");
+        require(startTimestamp < endTimestamp, "HoldersCollaborate: Must be start < end");
         start = startTimestamp;
         end = endTimestamp;
         setTokens(newTokens);
@@ -18,10 +18,10 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
 
     // Contribute to the collaboration
     function contribute(address token, uint256 amount) public returns (bool) {
-        require(token != address(0), "Invalid token");
-        require(tokenIsPresent(token), "No such token in collaboration");
-        require(getStatus() == Status.ACTIVE, "collaboration isn't active");
-        require(matchesLevelExtremes(token, amount), "Amount doesn't match level minimum-maximum requirements");
+        require(token != address(0), "HoldersCollaborate: Invalid token");
+        require(tokenIsPresent(token), "HoldersCollaborate: Invalid token");
+        require(getStatus() == Status.ACTIVE, "HoldersCollaborate: Not active");
+        require(matchesLevelExtremes(token, amount), "HoldersCollaborate: wrong amount");
 
         uint256 collaboratorId = getCollaboratorId(msg.sender);
         if (collaboratorId == collaborators.length) {
@@ -46,8 +46,8 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
     // Changes status of the collaboration (between ACTIVE and PAUSED)
     // see getStatus() function.
     function changeStatus(Status newStatus) public onlyOwner returns (bool) {
-        require(newStatus == Status.PAUSED || newStatus == Status.ACTIVE, "Can only start or pause");
-        require(getStatus() != Status.FINISHED, "collaboration has already finished");
+        require(newStatus == Status.PAUSED || newStatus == Status.ACTIVE, "HoldersCollaborate: Only paursed/active");
+        require(getStatus() != Status.FINISHED, "HoldersCollaborate: Finished");
 
         Status oldStatus = status;
         status = newStatus;
@@ -60,10 +60,10 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
     // Changes levels of the collaboration
     function updateLevel(Level memory updatedLevel) public onlyOwner onlyUpcoming returns (bool) {
         int256 getLevelId = int256(getLevelIdByOrder(updatedLevel.levelOrder));
-        require(getLevelId >= 0, "Level doesn't exist");
+        require(getLevelId >= 0, "HoldersCollaborate: No level");
 
         checkLevelParamsConsistency(updatedLevel);
-        
+
         uint256 levelId = uint256(getLevelId);
         Level memory oldLevel = levels[levelId];
 
@@ -79,10 +79,10 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
 
     // Changes tokens of the collaboration
     function updateToken(Token memory updatedToken) public onlyOwner onlyUpcoming returns (bool) {
-        require(updatedToken.tokenUsdPrice != 0, "tokenUsdPrice 0");
+        require(updatedToken.tokenUsdPrice != 0, "HoldersCollaborate: tokenUsdPrice 0");
 
         bool existingToken = tokenIsPresent(updatedToken.tokenAddress);
-        require(existingToken, "Token doesn't exist");
+        require(existingToken, "HoldersCollaborate: No token");
 
         Token memory oldToken;
 
@@ -104,7 +104,7 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
         uint256 startTimestamp,
         uint256 endTimestamp
     ) public onlyOwner onlyUpcoming returns (bool) {
-        require(startTimestamp < endTimestamp, "End time should be after start time");
+        require(startTimestamp < endTimestamp, "HoldersCollaborate: Must be start < end");
         uint256 oldStart = start;
         uint256 oldEnd = end;
 

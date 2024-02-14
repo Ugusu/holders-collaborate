@@ -13,7 +13,7 @@ interface ERC20 {
 
 contract HoldersHelpers is HoldersDatabase, HoldersGetters, Admin(msg.sender), Ownable(msg.sender) {
     modifier onlyUpcoming() {
-        require(getStatus() == Status.UPCOMING, "status not UPCOMING");
+        require(getStatus() == Status.UPCOMING, "HoldersHelpers: Not UPCOMING");
         _;
     }
     // If after end, FINISHED. If internal status ACTIVE, before start UPCOMING
@@ -40,11 +40,11 @@ contract HoldersHelpers is HoldersDatabase, HoldersGetters, Admin(msg.sender), O
         uint256 usdAmount = 0;
         for (uint256 i = 0; i < tokens.length; i++) {
             if (tokens[i].tokenAddress == token) {
-                usdAmount = (amount/1 ether) * tokens[i].tokenUsdPrice;
+                usdAmount = (amount / 1 ether) * tokens[i].tokenUsdPrice;
                 found = true;
             }
         }
-        require(found, "Error while converting token to USD");
+        require(found, "HoldersHelpers: token/USD error");
 
         return usdAmount;
     }
@@ -63,7 +63,7 @@ contract HoldersHelpers is HoldersDatabase, HoldersGetters, Admin(msg.sender), O
     function matchesLevelExtremes(address tokenAddress, uint256 amount) public view returns (bool) {
         uint256 tokenAmount = getTokenAmount(tokenAddress);
         uint256 amountUsd = tokenToUsd(tokenAddress, amount);
-        uint256 lastLevelOrder = levels[levels.length-1].levelOrder;
+        uint256 lastLevelOrder = levels[levels.length - 1].levelOrder;
 
         Level memory currentLevel = getActiveLevel();
         // Must be between min and max, must be not last level or if last level, within treshhold + minimum
@@ -71,7 +71,7 @@ contract HoldersHelpers is HoldersDatabase, HoldersGetters, Admin(msg.sender), O
             amountUsd >= currentLevel.minimum &&
             amountUsd <= currentLevel.maximum &&
             (currentLevel.levelOrder < lastLevelOrder ||
-            tokenAmount + amountUsd <= currentLevel.treshhold + currentLevel.minimum)
+                tokenAmount + amountUsd <= currentLevel.treshhold + currentLevel.minimum)
         ) {
             return true;
         }
@@ -86,25 +86,25 @@ contract HoldersHelpers is HoldersDatabase, HoldersGetters, Admin(msg.sender), O
         uint256 levelId;
 
         if (getLevelId >= 0) {
-            require(getStatus() == Status.UPCOMING, "status not UPCOMING");
+            require(getStatus() == Status.UPCOMING, "HoldersHelpers: Not UPCOMING");
             levelId = uint256(getLevelId);
         } else {
             lastLevelId = levels.length;
             levelId = lastLevelId;
         }
 
-        require(level.minimum <= level.maximum, "Must be min <= max");
+        require(level.minimum <= level.maximum, "HoldersHelpers: Must be min <= max");
         if (levelId > 0) {
-            require(level.levelOrder > levels[levelId - 1].levelOrder);
-            require(level.treshhold > levels[levelId - 1].treshhold, "Treshhold must increase");
-            require(level.reward > levels[levelId - 1].reward, "Reward must increase");
+            require(level.levelOrder > levels[levelId - 1].levelOrder, "HoldersHelpers: Order must increase");
+            require(level.treshhold > levels[levelId - 1].treshhold, "HoldersHelpers: Treshhold must increase");
+            require(level.reward > levels[levelId - 1].reward, "HoldersHelpers: Reward must increase");
         }
-        if (levelId < levels.length-1) {
-            require(level.levelOrder < levels[levelId + 1].levelOrder);
-            require(level.treshhold < levels[levelId + 1].treshhold, "Treshhold must increase");
-            require(level.reward < levels[levelId + 1].reward, "Reward must increase");
+        if (levelId < levels.length - 1) {
+            require(level.levelOrder < levels[levelId + 1].levelOrder, "HoldersHelpers: Order must increase");
+            require(level.treshhold < levels[levelId + 1].treshhold, "THoldersHelpers: reshhold must increase");
+            require(level.reward < levels[levelId + 1].reward, "HoldersHelpers: Reward must increase");
         } else {
-            require(checkBalances(level), "Insufficient balance");
+            require(checkBalances(level), "HoldersHelpers: Insufficient balance");
         }
 
         return true;
@@ -145,8 +145,8 @@ contract HoldersHelpers is HoldersDatabase, HoldersGetters, Admin(msg.sender), O
         delete tokens;
 
         for (uint256 i = 0; i < newTokens.length; i++) {
-            require(newTokens[i].tokenAddress != address(0), "tokenAddress 0");
-            require(newTokens[i].tokenUsdPrice > 0, "tokenUsdPrice 0");
+            require(newTokens[i].tokenAddress != address(0), "HoldersHelpers: tokenAddress 0");
+            require(newTokens[i].tokenUsdPrice > 0, "HoldersHelpers: tokenUsdPrice 0");
             newTokens[i].amount = 0;
             tokens.push(newTokens[i]);
         }
@@ -159,12 +159,15 @@ contract HoldersHelpers is HoldersDatabase, HoldersGetters, Admin(msg.sender), O
         delete levels;
 
         for (uint256 i = 0; i < newLevels.length; i++) {
-            require(newLevels[i].minimum <= newLevels[i].maximum, "Must be min <= max");
-            require(newLevels[i].reward >= 0 && newLevels[i].reward <= 10000, "Must be 0 <= reward <= 10000");
+            require(newLevels[i].minimum <= newLevels[i].maximum, "HoldersHelpers: Must be min <= max");
+            require(
+                newLevels[i].reward >= 0 && newLevels[i].reward <= 10000,
+                "HoldersHelpers: Must be 0 <= reward <= 10000"
+            );
             if (i > 0) {
-                require(newLevels[i].levelOrder > newLevels[i - 1].levelOrder, "Order must increase");
-                require(newLevels[i].treshhold > newLevels[i - 1].treshhold, "Treshhold must increase");
-                require(newLevels[i].reward > newLevels[i - 1].reward, "Reward must increase");
+                require(newLevels[i].levelOrder > newLevels[i - 1].levelOrder, "HoldersHelpers: Order must increase");
+                require(newLevels[i].treshhold > newLevels[i - 1].treshhold, "HoldersHelpers: Treshhold must increase");
+                require(newLevels[i].reward > newLevels[i - 1].reward, "HoldersHelpers: Reward must increase");
             }
 
             levels.push(newLevels[i]);

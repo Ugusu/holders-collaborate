@@ -3,7 +3,7 @@ const { expect } = require("chai");
 const { ethers, waffle, upgrades } = require("hardhat");
 const { parseUnits, parseEther } = ethers;
 
-async function waitStart(holders){
+async function waitStart(holders) {
   const startTimestamp = await holders.start();
   const blockNumber = await ethers.provider.getBlockNumber();
   const block = await ethers.provider.getBlock(blockNumber);
@@ -47,16 +47,16 @@ describe("Holders", function () {
     holders = await Holders.deploy(
       [[token1.target, 2, 0], [token2.target, 3, 10]],
       [[0, "First", 1000, 10, 100, 1000], [1, "Second", 2000, 20, 200, 2000]],
-      Number(currentTimestamp)+20,
-      Number(currentTimestamp)+600
+      Number(currentTimestamp) + 20,
+      Number(currentTimestamp) + 600
     );
 
     await holders.waitForDeployment();
 
     // Calculate required initial balance
-    requirePerTokenUSD = ((2000+20)*2000*1)/10000;
-    token1Balance = String(requirePerTokenUSD*2);
-    token2Balance = String(requirePerTokenUSD*3);
+    requirePerTokenUSD = ((2000 + 20) * 2000 * 1) / 10000;
+    token1Balance = String(requirePerTokenUSD * 2);
+    token2Balance = String(requirePerTokenUSD * 3);
     await token1.transfer(holders.target, parseEther(token1Balance));
     await token2.transfer(holders.target, parseEther(token2Balance));
 
@@ -112,7 +112,7 @@ describe("Holders", function () {
 
     expect(newLevels0.maximum).to.equal(100);
     expect(newLevels1.maximum).to.equal(200);
-    
+
     expect(newLevels0.reward).to.equal(1000);
     expect(newLevels1.reward).to.equal(2000);
 
@@ -124,7 +124,7 @@ describe("Holders", function () {
 
     expect(newTokens0.amount).to.equal(0)
     expect(newTokens1.amount).to.equal(0)
-  }); 
+  });
 
   it("should allow contribution when collaboration is active", async function () {
     await waitStart(holders);
@@ -134,28 +134,23 @@ describe("Holders", function () {
   });
 
   it("should not allow contribution when collaboration is not active", async function () {
-    await expect(holders.connect(holder1).contribute(token1.target, parseEther("20"))).to.be.revertedWith(
-      "collaboration isn't active"
-    );
+    await expect(holders.connect(holder1).contribute(token1.target, parseEther("20"))).to.be.revertedWith("HoldersCollaborate: Not active");
   });
 
   it("should not allow contribution with invalid token", async function () {
     await waitStart(holders);
-    await expect(holders.contribute(zeroAddress(), parseEther("20"))).to.be.revertedWith("Invalid token");
+    await expect(holders.contribute(zeroAddress(), parseEther("20"))).to.be.revertedWith("HoldersCollaborate: Invalid token");
   });
 
   it("should not allow contribution with token not in collaboration", async function () {
     await waitStart(holders);
-    await expect(holders.contribute(token3.target, parseEther("20"))).to.be.revertedWith(
-      "No such token in collaboration"
-    );
+    await expect(holders.contribute(token3.target, parseEther("20"))).to.be.revertedWith("HoldersCollaborate: Invalid token");
   });
 
   it("should allow changing collaboration status by owner", async function () {
     // Error message can be checked with:
-    //holders.connect(holder1).changeStatus(1)
-    // await expect(holders.connect(holder1).changeStatus(3)).to.be.revertedWith("OwnableUnauthorizedAccount(\""+holder1.address+"\")");
-    await expect(holders.connect(holder1).changeStatus(3)).to.be.revertedWith("OwnableUnauthorizedAccount");
+    //holders.connect(holder1).changeStatus(3)
+    await expect(holders.connect(holder1).changeStatus(3)).to.be.revertedWith("OwnableUnauthorizedAccount(\"" + holder1.address + "\")");
     await holders.connect(owner).changeStatus(3);
     expect(await holders.status()).to.equal(3);
   });
