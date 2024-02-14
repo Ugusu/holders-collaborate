@@ -104,6 +104,7 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
         uint256 startTimestamp,
         uint256 endTimestamp
     ) public onlyOwner onlyUpcoming returns (bool) {
+        require(startTimestamp < endTimestamp, "End time should be after start time");
         uint256 oldStart = start;
         uint256 oldEnd = end;
 
