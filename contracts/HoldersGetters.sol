@@ -1,47 +1,47 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.19;
 
-import {Level, Token, Status, Competitor} from "./Elements.sol";
+import {Level, Token, Status, Collaborator} from "./Elements.sol";
 import "./HoldersDatabase.sol";
 
 contract HoldersGetters is HoldersDatabase {
     // Getters
-    function getCompetitorId(address competitorAddress) public view returns (uint256) {
-        uint256 competitorId = 0;
+    function getCollaboratorId(address collaboratorAddress) public view returns (uint256) {
+        uint256 collaboratorId = 0;
 
-        // Check if the address is the first competitor
-        if (competitors.length>0 && competitorAddress != competitors[0].competitorAddress) {
-            if (competitorIndexes[competitorAddress] > 0) {
-                // If mapping address -> value higher than 0 (default), existing competitior
-                competitorId = competitorIndexes[competitorAddress];
+        // Check if the address is the first collaborator
+        if (collaborators.length > 0 && collaboratorAddress != collaborators[0].collaboratorAddress) {
+            if (collaboratorsIndexes[collaboratorAddress] > 0) {
+                // If mapping address -> amount higher than 0 (default), existing collaborator
+                collaboratorId = collaboratorsIndexes[collaboratorAddress];
             } else {
-                // If it's 0, then it's default and it's a new competitor (exception: fisrt competitor - alredy checked)
-                competitorId = competitors.length;
+                // If it's 0, then it's default and it's a new collaborator (exception: fisrt collaborator - alredy checked)
+                collaboratorId = collaborators.length;
             }
         }
 
-        return competitorId;
+        return collaboratorId;
     }
 
-    function getCompetitorValue(address competitorAddress) public view returns (uint256) {
-        uint256 competitorId = getCompetitorId(competitorAddress);
-        if (competitorId != competitors.length) {
-            return competitors[competitorId].value;
+    function getCollaboratorAmount(address collaboratorAddress) public view returns (uint256) {
+        uint256 collaboratorId = getCollaboratorId(collaboratorAddress);
+        if (collaboratorId != collaborators.length) {
+            return collaborators[collaboratorId].amount;
         }
         return 0;
     }
 
-    function getCompetitorByAddress(address competitorAddress) public view returns (Competitor memory) {
-        uint256 competitorId = getCompetitorId(competitorAddress);
-        if (competitorId != competitors.length) {
-            return competitors[competitorId];
+    function getCollaboratorByAddress(address collaboratorAddress) public view returns (Collaborator memory) {
+        uint256 collaboratorId = getCollaboratorId(collaboratorAddress);
+        if (collaboratorId != collaborators.length) {
+            return collaborators[collaboratorId];
         }
     }
 
-    function getTokenValue(address tokenAddress) public view returns (uint256) {
+    function getTokenAmount(address tokenAddress) public view returns (uint256) {
         for (uint256 i = 0; i < tokens.length; i++) {
             if (tokens[i].tokenAddress == tokenAddress) {
-                return tokens[i].value;
+                return tokens[i].amount;
             }
         }
         return 0;
@@ -55,40 +55,60 @@ contract HoldersGetters is HoldersDatabase {
         }
     }
 
-    function getActiveLevel(address tokenAddress) public view returns (Level memory) {
-        uint256 tokenValue = 0;
-        for (uint256 i = 0; i < tokens.length; i++) {
-            if (tokens[i].tokenAddress == tokenAddress) {
-                tokenValue = tokens[i].value;
+    function getActiveLevel() public view returns (Level memory) {
+        uint256 minTokenAmount = tokens[0].amount;
+        for (uint256 i = 1; i < tokens.length; i++) {
+            if (tokens[i].amount < minTokenAmount) {
+                minTokenAmount = tokens[i].amount;
             }
         }
         for (uint256 i = 0; i < levels.length; i++) {
-            if (tokenValue <= levels[i].treshhold) {
+            if (minTokenAmount <= levels[i].treshhold) {
                 return levels[i];
             }
         }
         return levels[levels.length - 1];
     }
 
+    function getLevelByOrder(uint256 levelOrder) public view returns (Level memory) {
+        for (uint256 i = 0; i < levels.length; i++) {
+            if (levels[i].levelOrder == levelOrder) {
+                return levels[i];
+            }
+        }
+    }
+
+    function getLevelIdByOrder(uint256 levelOrder) public view returns (int256) {
+        for (uint256 i = 0; i < levels.length; i++) {
+            if (levels[i].levelOrder == levelOrder) {
+                return int256(i);
+            }
+        }
+        return -1;
+    }
+
     function getLevelMinimum(uint256 levelOrder) public view returns (uint256) {
-        return levels[levelOrder].minimum;
+        Level memory getLevel = getLevelByOrder(levelOrder);
+        return getLevel.minimum;
     }
 
     function getLevelMaximum(uint256 levelOrder) public view returns (uint256) {
-        return levels[levelOrder].maximum;
+        Level memory getLevel = getLevelByOrder(levelOrder);
+        return getLevel.maximum;
     }
 
     function getLevelTreshhold(uint256 levelOrder) public view returns (uint256) {
-        return levels[levelOrder].treshhold;
+        Level memory getLevel = getLevelByOrder(levelOrder);
+        return getLevel.treshhold;
     }
 
-    function getTotalValue() public view returns (uint256) {
-        uint256 totalValue = 0;
+    function getTotalAmount() public view returns (uint256) {
+        uint256 totalAmount = 0;
 
         for (uint256 i = 0; i < tokens.length; i++) {
-            totalValue += tokens[i].value;
+            totalAmount += tokens[i].amount;
         }
 
-        return totalValue;
+        return totalAmount;
     }
 }

@@ -1,28 +1,28 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.19;
 
-import {Level, Token, Status, Competitor} from "./Elements.sol";
+import {Level, Token, Status, Collaborator} from "./Elements.sol";
 
 contract HoldersDatabase {
     // DATA
     Token[] public tokens;
     Level[] public levels;
-    Competitor[] public competitors;
+    Collaborator[] public collaborators;
 
-    mapping(address => uint256) public competitorIndexes;
+    mapping(address => uint256) public collaboratorsIndexes;
 
     uint256 public start = 0;
     uint256 public end = 0;
 
-    Status public status = Status.Upcoming;
+    Status internal status = Status.ACTIVE;
 
     // EVENTS
 
     event StatusChanged(Status oldStatus, Status newStatus);
 
-    event LevelsUpdated(Level[] oldLevels, Level[] newLevels);
+    event LevelUpdated(Level oldLevels, Level newLevels);
 
-    event TokensUpdated(Token[] oldTokens, Token[] newTokens);
+    event TokenUpdated(Token oldTokens, Token newTokens);
 
     event RewardPercentageChanged(uint256 oldRewardPercentage, uint256 newRewardPercentage);
 
@@ -30,5 +30,5 @@ contract HoldersDatabase {
 
     event LevelAdded(Level newLevel);
 
-    event Contributed(address competitor, address token, uint256 amount, uint256 usdAmount);
+    event Contributed(address collaborator, address token, uint256 amount, uint256 usdAmount);
 }
