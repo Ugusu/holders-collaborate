@@ -59,7 +59,7 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
 
     // Changes levels of the collaboration
     function updateLevel(Level memory updatedLevel) public onlyOwner onlyUpcoming returns (bool) {
-        int256 getLevelId = int256(getLevelIdByOrder(updatedLevel.levelOrder));
+        int256 getLevelId = getLevelIdByOrder(updatedLevel.levelOrder);
         require(getLevelId >= 0, "HoldersCollaborate: No level");
         updatedLevel.treshhold = updatedLevel.treshhold * 1 ether;
         updatedLevel.minimum = updatedLevel.minimum * 1 ether;
