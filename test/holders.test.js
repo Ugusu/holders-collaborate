@@ -18,6 +18,10 @@ function toWei(amount) {
   return BigInt(amount * (Math.pow(10, 18)));
 }
 
+function fromWei(amount) {
+  return Number(amount / BigInt(Math.pow(10, 18)));
+}
+
 describe("Holders", function () {
   let holders;
   let owner;
@@ -59,8 +63,8 @@ describe("Holders", function () {
 
     // Calculate required initial balance
     requirePerTokenUSD = ((2000 + 20) * 2000 * 1) / 10000;
-    token1Balance = String(requirePerTokenUSD * 2);
-    token2Balance = String(requirePerTokenUSD * 3);
+    token1Balance = String(Math.ceil(requirePerTokenUSD/2));
+    token2Balance = String(Math.ceil(requirePerTokenUSD/3));
     await token1.transfer(holders.target, parseEther(token1Balance));
     await token2.transfer(holders.target, parseEther(token2Balance));
 
@@ -158,6 +162,8 @@ describe("Holders", function () {
   });
 
   it("should allow updating level by owner", async function () {
+    // Not last level, updating balance not needed
+    // see adding new level below, for balance
     await holders.updateLevel([0, "One", 1500, 15, 150, 1500]);
     const newLevels0 = await holders.levels(0);
     expect(newLevels0.levelName).to.equal("One");
@@ -189,6 +195,23 @@ describe("Holders", function () {
   });
 
   it("should allow adding new level by owner", async function () {
+    // Calculationg additional must be fund
+    // Alternative calculation can be done with toWei(newRequiredPerTokenUsd / tokenUsdPrice) - token.balanceOf(contract) - more precise
+    const newRequiredPerTokenUsd = ((3000+30)*3000*1)/10000;
+
+    // getNumberOfTokens then loop to get addresses of tokens and their USD prices can be used, for calculations
+    const additionalToken1Balance = toWei(newRequiredPerTokenUsd / 2) - await token1.balanceOf(holders.target);
+    const additionalToken2Balance = toWei(newRequiredPerTokenUsd / 3) - await token2.balanceOf(holders.target);
+    
+    // Transfering additional funds for new level
+    await token1.transfer(holders.target, String(additionalToken1Balance));
+    await token2.transfer(holders.target, String(additionalToken2Balance));
+
+    // Checking if balance is OK
+    expect(await token1.balanceOf(holders.target)).to.be.gte(toWei(newRequiredPerTokenUsd/2));
+    expect(await token2.balanceOf(holders.target)).to.be.gte(toWei(newRequiredPerTokenUsd/3));
+
+    // Adding new level
     await holders.addLevel([5, "Third", 3000, 30, 300, 3000]);
     const newLevels2 = await holders.levels(2);
     expect(newLevels2.levelOrder).to.equal(5);

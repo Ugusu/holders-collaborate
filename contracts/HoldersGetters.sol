@@ -55,6 +55,10 @@ contract HoldersGetters is HoldersDatabase {
         }
     }
 
+    function getNumberOfTokesn() public view returns (uint256) {
+        return tokens.length;
+    }
+
     function getActiveLevel() public view returns (Level memory) {
         uint256 minTokenAmount = tokens[0].amount;
         for (uint256 i = 1; i < tokens.length; i++) {
@@ -100,6 +104,10 @@ contract HoldersGetters is HoldersDatabase {
     function getLevelTreshhold(uint256 levelOrder) public view returns (uint256) {
         Level memory getLevel = getLevelByOrder(levelOrder);
         return getLevel.treshhold;
+    }
+
+    function getNumberOfLevels() public view returns (uint256) {
+        return levels.length;
     }
 
     function getTotalAmount() public view returns (uint256) {
