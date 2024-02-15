@@ -40,7 +40,7 @@ contract HoldersHelpers is HoldersDatabase, HoldersGetters, Admin(msg.sender), O
         uint256 usdAmount = 0;
         for (uint256 i = 0; i < tokens.length; i++) {
             if (tokens[i].tokenAddress == token) {
-                usdAmount = (amount / 1 ether) * tokens[i].tokenUsdPrice;
+                usdAmount = amount * tokens[i].tokenUsdPrice;
                 found = true;
             }
         }
@@ -159,6 +159,10 @@ contract HoldersHelpers is HoldersDatabase, HoldersGetters, Admin(msg.sender), O
         delete levels;
 
         for (uint256 i = 0; i < newLevels.length; i++) {
+            newLevels[i].treshhold = newLevels[i].treshhold * 1 ether;
+            newLevels[i].minimum = newLevels[i].minimum * 1 ether;
+            newLevels[i].maximum = newLevels[i].maximum * 1 ether;
+            
             require(newLevels[i].minimum <= newLevels[i].maximum, "HoldersHelpers: Must be min <= max");
             require(
                 newLevels[i].reward >= 0 && newLevels[i].reward <= 10000,

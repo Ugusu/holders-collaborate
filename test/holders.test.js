@@ -14,6 +14,10 @@ async function waitStart(holders) {
   }
 }
 
+function toWei(amount) {
+  return BigInt(amount * (Math.pow(10, 18)));
+}
+
 describe("Holders", function () {
   let holders;
   let owner;
@@ -104,14 +108,14 @@ describe("Holders", function () {
     expect(newLevels0.levelName).to.equal("First");
     expect(newLevels1.levelName).to.equal("Second");
 
-    expect(newLevels0.treshhold).to.equal(1000);
-    expect(newLevels1.treshhold).to.equal(2000);
+    expect(newLevels0.treshhold).to.equal(toWei(1000));
+    expect(newLevels1.treshhold).to.equal(toWei(2000));
 
-    expect(newLevels0.minimum).to.equal(10);
-    expect(newLevels1.minimum).to.equal(20);
+    expect(newLevels0.minimum).to.equal(toWei(10));
+    expect(newLevels1.minimum).to.equal(toWei(20));
 
-    expect(newLevels0.maximum).to.equal(100);
-    expect(newLevels1.maximum).to.equal(200);
+    expect(newLevels0.maximum).to.equal(toWei(100));
+    expect(newLevels1.maximum).to.equal(toWei(200));
 
     expect(newLevels0.reward).to.equal(1000);
     expect(newLevels1.reward).to.equal(2000);
@@ -148,20 +152,18 @@ describe("Holders", function () {
   });
 
   it("should allow changing collaboration status by owner", async function () {
-    // Error message can be checked with:
-    //holders.connect(holder1).changeStatus(3)
-    await expect(holders.connect(holder1).changeStatus(3)).to.be.revertedWith("OwnableUnauthorizedAccount(\"" + holder1.address + "\")");
+    await expect(holders.connect(holder1).changeStatus(3)).to.be.revertedWithCustomError(holders, "OwnableUnauthorizedAccount").withArgs(holder1.address);
     await holders.connect(owner).changeStatus(3);
-    expect(await holders.status()).to.equal(3);
+    expect(await holders.getStatus()).to.equal(3);
   });
 
   it("should allow updating level by owner", async function () {
     await holders.updateLevel([0, "One", 1500, 15, 150, 1500]);
     const newLevels0 = await holders.levels(0);
     expect(newLevels0.levelName).to.equal("One");
-    expect(newLevels0.treshhold).to.equal(1500);
-    expect(newLevels0.minimum).to.equal(15);
-    expect(newLevels0.maximum).to.equal(150);;
+    expect(newLevels0.treshhold).to.equal(toWei(1500));
+    expect(newLevels0.minimum).to.equal(toWei(15));
+    expect(newLevels0.maximum).to.equal(toWei(150));;
     expect(newLevels0.reward).to.equal(1500);
   });
 
@@ -191,9 +193,9 @@ describe("Holders", function () {
     const newLevels2 = await holders.levels(2);
     expect(newLevels2.levelOrder).to.equal(5);
     expect(newLevels2.levelName).to.equal("Third");
-    expect(newLevels2.treshhold).to.equal(3000);
-    expect(newLevels2.minimum).to.equal(30);
-    expect(newLevels2.maximum).to.equal(300);
+    expect(newLevels2.treshhold).to.equal(toWei(3000));
+    expect(newLevels2.minimum).to.equal(toWei(30));
+    expect(newLevels2.maximum).to.equal(toWei(300));
     expect(newLevels2.reward).to.equal(3000);
   });
 });

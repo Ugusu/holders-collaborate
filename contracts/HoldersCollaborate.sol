@@ -61,6 +61,9 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
     function updateLevel(Level memory updatedLevel) public onlyOwner onlyUpcoming returns (bool) {
         int256 getLevelId = int256(getLevelIdByOrder(updatedLevel.levelOrder));
         require(getLevelId >= 0, "HoldersCollaborate: No level");
+        updatedLevel.treshhold = updatedLevel.treshhold * 1 ether;
+        updatedLevel.minimum = updatedLevel.minimum * 1 ether;
+        updatedLevel.maximum = updatedLevel.maximum * 1 ether;
 
         checkLevelParamsConsistency(updatedLevel);
 
@@ -118,6 +121,9 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
 
     // Adds new level
     function addLevel(Level memory newLevel) public onlyOwner returns (bool) {
+        newLevel.treshhold = newLevel.treshhold * 1 ether;
+        newLevel.maximum = newLevel.maximum * 1 ether;
+        newLevel.minimum = newLevel.minimum * 1 ether;
         checkLevelParamsConsistency(newLevel);
 
         levels.push(newLevel);
