@@ -142,6 +142,8 @@ describe("Holders", function () {
 
     // balance - toWei(token1Balance) is needed untill we have functions to get per user contributions
     // as balance is initial owner tranfer + user contribution
+    // When we get per user contributions we can get contribution before and after
+    // and compare difference to contibuted amount for test
     expect(await token1.balanceOf(holders.target)-toWei(token1Balance)).to.equal(parseEther("20"))
   });
 
