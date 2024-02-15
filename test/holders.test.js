@@ -137,8 +137,12 @@ describe("Holders", function () {
   it("should allow contribution when collaboration is active", async function () {
     await waitStart(holders);
     await holders.connect(holder1).contribute(token1.target, parseEther("20"));
-    const ccollaboratorId = await holders.getCollaboratorId(holder1.address);
-    expect(ccollaboratorId).to.equal(0);
+    const collaboratorId = await holders.getCollaboratorId(holder1.address);
+    expect(collaboratorId).to.equal(0);
+
+    // balance - toWei(token1Balance) is needed untill we have functions to get per user contributions
+    // as balance is initial owner tranfer + user contribution
+    expect(await token1.balanceOf(holders.target)-toWei(token1Balance)).to.equal(parseEther("20"))
   });
 
   it("should not allow contribution when collaboration is not active", async function () {

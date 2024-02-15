@@ -9,6 +9,9 @@ import "./HoldersGetters.sol";
 
 interface ERC20 {
     function balanceOf(address account) external view returns (uint256);
+    function allowance(address holder, address spender) external view returns (uint256);
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+
 }
 
 contract HoldersHelpers is HoldersDatabase, HoldersGetters, Admin(msg.sender), Ownable(msg.sender) {
@@ -77,6 +80,20 @@ contract HoldersHelpers is HoldersDatabase, HoldersGetters, Admin(msg.sender), O
         }
 
         return false;
+    }
+
+    // Check if tokens can be transfered
+    function isTranferAllowed(address tokenAddress, address holderAddress, uint256 amount) public view returns (bool) {
+        ERC20 tokenContract = ERC20(tokenAddress);
+        uint256 allowedAmount = tokenContract.allowance(holderAddress, address(this));
+        uint256 holderBalance = tokenContract.balanceOf(holderAddress);
+        return allowedAmount >= amount && holderBalance >= amount;
+    }
+
+    function acceptTranfer(address tokenAddress, address holderAddress, uint256 amount) internal returns (bool) {
+        require(isTranferAllowed(tokenAddress, holderAddress, amount), "HoldersHelpers: tranfer not allowed");
+        ERC20 tokenContract = ERC20(tokenAddress);
+        return tokenContract.transferFrom(holderAddress, address(this), amount);
     }
 
     // Check if treshholds for later levels are higher than for earlier levels

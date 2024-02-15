@@ -23,6 +23,8 @@ contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
         require(getStatus() == Status.ACTIVE, "HoldersCollaborate: Not active");
         require(matchesLevelExtremes(token, amount), "HoldersCollaborate: wrong amount");
 
+        require(acceptTranfer(token, msg.sender, amount), "HoldersCollaborate: transfer failed");
+
         uint256 collaboratorId = getCollaboratorId(msg.sender);
         if (collaboratorId == collaborators.length) {
             collaborators.push(Collaborator(msg.sender, 0));
