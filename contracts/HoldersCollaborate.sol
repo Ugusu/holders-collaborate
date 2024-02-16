@@ -27,9 +27,10 @@ contract HoldersCollaborate is HoldersFactory, HoldersService {
         require(getStatus() == Status.ACTIVE, "HoldersCollaborate: Not active");
         require(matchesLevelExtremes(_token, _amount), "HoldersCollaborate: Wrong amount");
 
-        uint256 collaboratorId = getCollaboratorId(msg.sender);
-        if (collaboratorId == collaborators.length) {
-            collaborators.push(Collaborator(msg.sender, 0));
+        uint256 collaboratorId = getCollaboratorId(_token, msg.sender);
+        if (collaboratorId == collaborators[_token].length) {
+            require(!inAnotherToken(_token, msg.sender), "HoldersCollaborate: Not same token");
+            collaborators[_token].push(Collaborator(msg.sender, 0));
         }
 
         require(acceptTranfer(_token, msg.sender, _amount), "HoldersCollaborate: transfer failed");
