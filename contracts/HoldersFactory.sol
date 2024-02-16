@@ -19,9 +19,9 @@ abstract contract HoldersFactory {
 
     event StatusChange(Status oldStatus, Status newStatus);
 
-    event LevelUpdate(Level oldLevels, Level newLevels);
+    event LevelUpdate(Level oldLevel, Level newLevel);
 
-    event TokenUpdate(Token oldTokens, Token newTokens);
+    event TokenUpdate(Token oldToken, Token newToken);
 
     event StartEndTimeUpdate(uint256 oldStart, uint256 oldEnd, uint256 newStart, uint256 newEnd);
 
