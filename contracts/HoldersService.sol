@@ -41,16 +41,17 @@ contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender
     function getStatus() public view returns (Status) {
         if (block.timestamp >= end) {
             return Status.FINISHED;
-        } else if (status == Status.ACTIVE) {
-            if (block.timestamp < start) {
-                return Status.UPCOMING;
-            } else if (checkBalances(levels[levels.length - 1])) {
-                return Status.ACTIVE;
-            } else if (!checkBalances(levels[levels.length - 1])) {
-                return Status.PENDING;
-            }
-        } else {
+        }
+        if (status == Status.PAUSED){
             return Status.PAUSED;
+        }  
+        if (block.timestamp < start) {
+            return Status.UPCOMING;
+        } 
+        if (checkBalances(levels[levels.length - 1])) {
+            return Status.ACTIVE;
+        } else {
+            return Status.PENDING;
         }
     }
 
