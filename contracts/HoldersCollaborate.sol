@@ -30,10 +30,9 @@ contract HoldersCollaborate is HoldersFactory, HoldersService {
         uint256 collaboratorId = getCollaboratorId(msg.sender);
         if (collaboratorId == collaborators.length) {
             collaborators.push(Collaborator(msg.sender, 0));
-            collaboratorsIndexes[msg.sender] = collaboratorId;
         }
 
-        require(acceptTranfer(token, msg.sender, amount), "HoldersCollaborate: transfer failed");
+        require(acceptTranfer(_token, msg.sender, _amount), "HoldersCollaborate: transfer failed");
 
         uint256 tokenUsdAmount = tokenToUsd(_token, _amount);
         collaborators[_token][collaboratorId].amount += tokenUsdAmount;

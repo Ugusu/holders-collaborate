@@ -102,17 +102,17 @@ contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender
     }
 
     // Check if tokens can be transfered
-    function isTranferAllowed(address tokenAddress, address holderAddress, uint256 amount) public view returns (bool) {
-        ERC20 tokenContract = ERC20(tokenAddress);
-        uint256 allowedAmount = tokenContract.allowance(holderAddress, address(this));
-        uint256 holderBalance = tokenContract.balanceOf(holderAddress);
-        return allowedAmount >= amount && holderBalance >= amount;
+    function isTranferAllowed(address _token, address _holder, uint256 _amount) public view returns (bool) {
+        ERC20 tokenContract = ERC20(_token);
+        uint256 allowedAmount = tokenContract.allowance(_holder, address(this));
+        uint256 holderBalance = tokenContract.balanceOf(_holder);
+        return allowedAmount >= _amount && holderBalance >= _amount;
     }
 
-    function acceptTranfer(address tokenAddress, address holderAddress, uint256 amount) internal returns (bool) {
-        require(isTranferAllowed(tokenAddress, holderAddress, amount), "HoldersHelpers: tranfer not allowed");
-        ERC20 tokenContract = ERC20(tokenAddress);
-        return tokenContract.transferFrom(holderAddress, address(this), amount);
+    function acceptTranfer(address _token, address _holder, uint256 _amount) internal returns (bool) {
+        require(isTranferAllowed(_token, _holder, _amount), "HoldersHelpers: tranfer not allowed");
+        ERC20 tokenContract = ERC20(_token);
+        return tokenContract.transferFrom(_holder, address(this), _amount);
     }
 
     // Check if treshholds for later levels are higher than for earlier levels
