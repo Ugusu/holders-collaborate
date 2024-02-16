@@ -72,4 +72,12 @@ abstract contract HoldersFactory {
 
         return totalAmount;
     }
+
+    function getNumberOfTokesn() public view returns (uint256) {
+        return tokens.length;
+    }
+
+    function getNumberOfLevels() public view returns (uint256) {
+        return levels.length;
+    }
 }

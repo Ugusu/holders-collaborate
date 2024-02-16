@@ -60,7 +60,7 @@ contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender
         uint256 usdAmount = 0;
         for (uint256 i = 0; i < tokens.length; i++) {
             if (tokens[i].adrs == _token) {
-                usdAmount = (_amount / 1 ether) * tokens[i].price;
+                usdAmount = _amount * tokens[i].tokenUsdPrice;
                 found = true;
             }
         }
@@ -165,6 +165,10 @@ contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender
         delete levels;
 
         for (uint256 i = 0; i < _levels.length; i++) {
+            newLevels[i].treshhold = newLevels[i].treshhold * 1 ether;
+            newLevels[i].minimum = newLevels[i].minimum * 1 ether;
+            newLevels[i].maximum = newLevels[i].maximum * 1 ether;
+            
             require(_levels[i].minimum <= _levels[i].maximum, "HoldersService: Must be min <= max");
             require(
                 _levels[i].reward >= 0 && _levels[i].reward <= 10000,
