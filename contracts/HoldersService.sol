@@ -53,8 +53,6 @@ contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender
         } else {
             return Status.PENDING;
         }
-
-        return status;
     }
 
     // Convert token amount to USD
