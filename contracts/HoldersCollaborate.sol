@@ -1,134 +1,145 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.19;
 
-import {Level, Token, Status, Collaborator} from "./Elements.sol";
-import "./HoldersDatabase.sol";
-import "./HoldersGetters.sol";
-import "./HoldersHelpers.sol";
+import {Level, Token, Status, Collaborator, LevelTemplate, TokenTemplate} from "./Elements.sol";
+import "./HoldersFactory.sol";
+import "./HoldersService.sol";
 
-contract HoldersCollaborate is HoldersDatabase, HoldersGetters, HoldersHelpers {
-    constructor(Token[] memory newTokens, Level[] memory newLevels, uint256 startTimestamp, uint256 endTimestamp) {
-        require(block.timestamp < startTimestamp, "HoldersCollaborate: start in past");
-        require(startTimestamp < endTimestamp, "HoldersCollaborate: Must be start < end");
-        start = startTimestamp;
-        end = endTimestamp;
-        setTokens(newTokens);
-        setLevels(newLevels);
+contract HoldersCollaborate is HoldersFactory, HoldersService {
+    constructor(
+        TokenTemplate[] memory _tokens,
+        LevelTemplate[] memory _levels,
+        uint256 _startTimestamp,
+        uint256 _endTimestamp
+    ) {
+        require(block.timestamp < _startTimestamp, "HoldersCollaborate: start in past");
+        require(_startTimestamp < _endTimestamp, "HoldersCollaborate: Must be start < end");
+        start = _startTimestamp;
+        end = _endTimestamp;
+        setTokens(_tokens);
+        setLevels(_levels);
     }
 
     // Contribute to the collaboration
-    function contribute(address token, uint256 amount) public returns (bool) {
-        require(token != address(0), "HoldersCollaborate: Invalid token");
-        require(tokenIsPresent(token), "HoldersCollaborate: Invalid token");
+    function contribute(address _token, uint256 _amount) public returns (bool) {
+        require(_token != address(0), "HoldersCollaborate: Invalid token");
+        require(tokenIsPresent(_token), "HoldersCollaborate: Invalid token");
         require(getStatus() == Status.ACTIVE, "HoldersCollaborate: Not active");
-        require(matchesLevelExtremes(token, amount), "HoldersCollaborate: wrong amount");
+        require(matchesLevelExtremes(_token, _amount), "HoldersCollaborate: Wrong amount");
 
-        uint256 collaboratorId = getCollaboratorId(msg.sender);
-        if (collaboratorId == collaborators.length) {
-            collaborators.push(Collaborator(msg.sender, 0));
-            collaboratorsIndexes[msg.sender] = collaboratorId;
+        uint256 collaboratorId = getCollaboratorId(_token, msg.sender);
+        if (collaboratorId == collaborators[_token].length) {
+            require(!inAnotherToken(_token, msg.sender), "HoldersCollaborate: Not same token");
+            collaborators[_token].push(Collaborator(msg.sender, 0));
         }
 
-        uint256 tokenUsdAmount = tokenToUsd(token, amount);
-        collaborators[collaboratorId].amount += tokenUsdAmount;
+        uint256 tokenUsdAmount = tokenToUsd(_token, _amount);
+        collaborators[_token][collaboratorId].amount += tokenUsdAmount;
 
         for (uint256 i = 0; i < tokens.length; i++) {
-            if (tokens[i].tokenAddress == token) {
+            if (tokens[i].adrs == _token) {
                 tokens[i].amount += tokenUsdAmount;
             }
         }
 
-        emit Contributed(msg.sender, token, amount, tokenUsdAmount);
+        emit Contribute(msg.sender, _token, _amount, tokenUsdAmount);
 
         return true;
     }
 
     // Changes status of the collaboration (between ACTIVE and PAUSED)
     // see getStatus() function.
-    function changeStatus(Status newStatus) public onlyOwner returns (bool) {
-        require(newStatus == Status.PAUSED || newStatus == Status.ACTIVE, "HoldersCollaborate: Only paursed/active");
+    function changeStatus(Status _status) public onlyOwner returns (bool) {
+        require(_status == Status.PAUSED || _status == Status.ACTIVE, "HoldersCollaborate: Only paused/active");
         require(getStatus() != Status.FINISHED, "HoldersCollaborate: Finished");
 
         Status oldStatus = status;
-        status = newStatus;
+        status = _status;
 
-        emit StatusChanged(oldStatus, status);
+        emit StatusChange(oldStatus, status);
 
         return true;
     }
 
     // Changes levels of the collaboration
-    function updateLevel(Level memory updatedLevel) public onlyOwner onlyUpcoming returns (bool) {
-        int256 getLevelId = int256(getLevelIdByOrder(updatedLevel.levelOrder));
-        require(getLevelId >= 0, "HoldersCollaborate: No level");
+    function updateLevel(Level memory _level) public onlyOwner onlyUpcoming returns (bool) {
+        require(_level.id < levels.length, "HoldersCollaborate: No level");
 
-        checkLevelParamsConsistency(updatedLevel);
+        checkLevelParamsConsistency(_level);
 
-        uint256 levelId = uint256(getLevelId);
+        uint256 levelId = _level.id;
         Level memory oldLevel = levels[levelId];
 
-        levels[levelId].levelName = updatedLevel.levelName;
-        levels[levelId].minimum = updatedLevel.minimum;
-        levels[levelId].maximum = updatedLevel.maximum;
-        levels[levelId].treshhold = updatedLevel.treshhold;
-        levels[levelId].reward = updatedLevel.reward;
+        levels[levelId].name = _level.name;
+        levels[levelId].minimum = _level.minimum;
+        levels[levelId].maximum = _level.maximum;
+        levels[levelId].treshhold = _level.treshhold;
+        levels[levelId].reward = _level.reward;
 
-        emit LevelUpdated(oldLevel, updatedLevel);
+        emit LevelUpdate(oldLevel, levels[levelId]);
         return true;
     }
 
     // Changes tokens of the collaboration
-    function updateToken(Token memory updatedToken) public onlyOwner onlyUpcoming returns (bool) {
-        require(updatedToken.tokenUsdPrice != 0, "HoldersCollaborate: tokenUsdPrice 0");
+    function updateToken(TokenTemplate memory _token) public onlyOwner onlyUpcoming returns (bool) {
+        require(_token.price != 0, "HoldersCollaborate: price 0");
 
-        bool existingToken = tokenIsPresent(updatedToken.tokenAddress);
-        require(existingToken, "HoldersCollaborate: No token");
+        bool exists = tokenIsPresent(_token.adrs);
+        require(exists, "HoldersCollaborate: No token");
 
         Token memory oldToken;
 
         for (uint256 i = 0; i < tokens.length; i++) {
-            if (tokens[i].tokenAddress == updatedToken.tokenAddress) {
+            if (tokens[i].adrs == _token.adrs) {
                 oldToken = tokens[i];
-                tokens[i].tokenUsdPrice = updatedToken.tokenUsdPrice;
+                tokens[i].price = _token.price;
                 break;
             }
         }
 
-        emit TokenUpdated(oldToken, updatedToken);
+        emit TokenUpdate(oldToken, Token(oldToken.adrs, _token.price, oldToken.amount));
 
         return true;
     }
 
     // Changes start and end time
     function updateStartEndTime(
-        uint256 startTimestamp,
-        uint256 endTimestamp
+        uint256 _startTimestamp,
+        uint256 _endTimestamp
     ) public onlyOwner onlyUpcoming returns (bool) {
-        require(startTimestamp < endTimestamp, "HoldersCollaborate: Must be start < end");
+        require(_startTimestamp < _endTimestamp, "HoldersCollaborate: Must be start < end");
         uint256 oldStart = start;
         uint256 oldEnd = end;
 
-        start = startTimestamp;
-        end = endTimestamp;
+        start = _startTimestamp;
+        end = _endTimestamp;
 
-        emit StartEndTimeUpdated(oldStart, oldEnd, start, end);
+        emit StartEndTimeUpdate(oldStart, oldEnd, start, end);
 
         return true;
     }
 
     // Adds new level
-    function addLevel(Level memory newLevel) public onlyOwner returns (bool) {
+    function addLevel(LevelTemplate memory _level) public onlyOwner returns (bool) {
+        Level memory newLevel = Level(
+            levels.length,
+            _level.name,
+            _level.treshhold,
+            _level.minimum,
+            _level.maximum,
+            _level.reward
+        );
         checkLevelParamsConsistency(newLevel);
 
         levels.push(newLevel);
 
-        emit LevelAdded(newLevel);
+        emit LevelAdd(newLevel);
 
         return true;
     }
 
-    function setAdmin(address admin, bool value) public override onlyOwner {
-        admins[admin] = value;
-        emit AdminSet(admin, value);
+    function setAdmin(address _admin, bool _value) public override onlyOwner {
+        admins[_admin] = _value;
+        emit AdminSet(_admin, _value);
     }
 }

@@ -45,8 +45,8 @@ describe("Holders", function () {
     const Holders = await ethers.getContractFactory("HoldersCollaborate");
     // Tokens, USD prices, start (in 20 seconds), end (in 5 minutes), level thresholds, minimums, maximums, rewards.
     holders = await Holders.deploy(
-      [[token1.target, 2, 0], [token2.target, 3, 10]],
-      [[0, "First", 1000, 10, 100, 1000], [1, "Second", 2000, 20, 200, 2000]],
+      [[token1.target, 2], [token2.target, 3]],
+      [["First", 1000, 10, 100, 1000], ["Second", 2000, 20, 200, 2000]],
       Number(currentTimestamp) + 20,
       Number(currentTimestamp) + 600
     );
@@ -98,11 +98,11 @@ describe("Holders", function () {
     const newTokens0 = await holders.tokens(0);
     const newTokens1 = await holders.tokens(1);
 
-    expect(newLevels0.levelOrder).to.equal(0);
-    expect(newLevels1.levelOrder).to.equal(1);
+    expect(newLevels0.id).to.equal(0);
+    expect(newLevels1.id).to.equal(1);
 
-    expect(newLevels0.levelName).to.equal("First");
-    expect(newLevels1.levelName).to.equal("Second");
+    expect(newLevels0.name).to.equal("First");
+    expect(newLevels1.name).to.equal("Second");
 
     expect(newLevels0.treshhold).to.equal(1000);
     expect(newLevels1.treshhold).to.equal(2000);
@@ -116,11 +116,11 @@ describe("Holders", function () {
     expect(newLevels0.reward).to.equal(1000);
     expect(newLevels1.reward).to.equal(2000);
 
-    expect(newTokens0.tokenAddress).to.equal(token1.target)
-    expect(newTokens1.tokenAddress).to.equal(token2.target)
+    expect(newTokens0.adrs).to.equal(token1.target)
+    expect(newTokens1.adrs).to.equal(token2.target)
 
-    expect(newTokens0.tokenUsdPrice).to.equal(2)
-    expect(newTokens1.tokenUsdPrice).to.equal(3)
+    expect(newTokens0.price).to.equal(2)
+    expect(newTokens1.price).to.equal(3)
 
     expect(newTokens0.amount).to.equal(0)
     expect(newTokens1.amount).to.equal(0)
@@ -129,7 +129,7 @@ describe("Holders", function () {
   it("should allow contribution when collaboration is active", async function () {
     await waitStart(holders);
     await holders.connect(holder1).contribute(token1.target, parseEther("20"));
-    const ccollaboratorId = await holders.getCollaboratorId(holder1.address);
+    const ccollaboratorId = await holders.getCollaboratorId(token1.target, holder1.address);
     expect(ccollaboratorId).to.equal(0);
   });
 
@@ -148,17 +148,15 @@ describe("Holders", function () {
   });
 
   it("should allow changing collaboration status by owner", async function () {
-    // Error message can be checked with:
-    //holders.connect(holder1).changeStatus(3)
-    await expect(holders.connect(holder1).changeStatus(3)).to.be.revertedWith("OwnableUnauthorizedAccount(\"" + holder1.address + "\")");
+    await expect(holders.connect(holder1).changeStatus(3)).to.be.revertedWithCustomError(holders, "OwnableUnauthorizedAccount").withArgs(holder1.address);
     await holders.connect(owner).changeStatus(3);
-    expect(await holders.status()).to.equal(3);
+    expect(await holders.getStatus()).to.equal(3);
   });
 
   it("should allow updating level by owner", async function () {
     await holders.updateLevel([0, "One", 1500, 15, 150, 1500]);
     const newLevels0 = await holders.levels(0);
-    expect(newLevels0.levelName).to.equal("One");
+    expect(newLevels0.name).to.equal("One");
     expect(newLevels0.treshhold).to.equal(1500);
     expect(newLevels0.minimum).to.equal(15);
     expect(newLevels0.maximum).to.equal(150);;
@@ -167,9 +165,9 @@ describe("Holders", function () {
 
   it("should allow updating tokens by owner", async function () {
     const oldTokens1 = await holders.tokens(1);
-    await holders.updateToken([token2.target, 4, 10]);
+    await holders.updateToken([token2.target, 4]);
     const newTokens1 = await holders.tokens(1);
-    expect(newTokens1.tokenUsdPrice).to.equal(4);
+    expect(newTokens1.price).to.equal(4);
     expect(newTokens1.amount).to.equal(oldTokens1.amount);
   });
 
@@ -187,10 +185,10 @@ describe("Holders", function () {
   });
 
   it("should allow adding new level by owner", async function () {
-    await holders.addLevel([5, "Third", 3000, 30, 300, 3000]);
+    await holders.addLevel(["Third", 3000, 30, 300, 3000]);
     const newLevels2 = await holders.levels(2);
-    expect(newLevels2.levelOrder).to.equal(5);
-    expect(newLevels2.levelName).to.equal("Third");
+    expect(newLevels2.id).to.equal(2);
+    expect(newLevels2.name).to.equal("Third");
     expect(newLevels2.treshhold).to.equal(3000);
     expect(newLevels2.minimum).to.equal(30);
     expect(newLevels2.maximum).to.equal(300);
