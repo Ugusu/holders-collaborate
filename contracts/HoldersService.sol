@@ -44,9 +44,11 @@ contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender
         } else if (status == Status.ACTIVE) {
             if (block.timestamp < start) {
                 return Status.UPCOMING;
-            } else if (checkBalances(levels[levels.length - 1])) {
+            } 
+
+            if (checkBalances(levels[levels.length - 1])) {
                 return Status.ACTIVE;
-            } else if (!checkBalances(levels[levels.length - 1])) {
+            } else {
                 return Status.PENDING;
             }
         }
