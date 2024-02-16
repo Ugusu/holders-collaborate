@@ -49,9 +49,9 @@ contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender
             } else if (!checkBalances(levels[levels.length - 1])) {
                 return Status.PENDING;
             }
-        } else {
-            return Status.PAUSED;
         }
+
+        return status;
     }
 
     // Convert token amount to USD
