@@ -60,7 +60,7 @@ contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender
         uint256 usdAmount = 0;
         for (uint256 i = 0; i < tokens.length; i++) {
             if (tokens[i].adrs == _token) {
-                usdAmount = _amount * tokens[i].tokenUsdPrice;
+                usdAmount = _amount * tokens[i].price;
                 found = true;
             }
         }
