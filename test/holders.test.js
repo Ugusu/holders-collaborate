@@ -53,8 +53,10 @@ describe("Holders", function () {
     const Holders = await ethers.getContractFactory("HoldersCollaborate");
     // Tokens, USD prices, start (in 20 seconds), end (in 5 minutes), level thresholds, minimums, maximums, rewards.
     holders = await Holders.deploy(
-      [[token1.target, 2], [token2.target, 3]],
-      [["First", 1000, 10, 100, 1000], ["Second", 2000, 20, 200, 2000]],
+      [[token1.target, parseEther("2")], [token2.target, parseEther("3")]],
+      [
+        ["First", parseEther("1000"), parseEther("10"), parseEther("100"), parseEther("1")],
+        ["Second", parseEther("2000"), parseEther("20"), parseEther("200"), parseEther("2")]],
       Number(currentTimestamp) + 20,
       Number(currentTimestamp) + 600
     );
@@ -62,9 +64,9 @@ describe("Holders", function () {
     await holders.waitForDeployment();
 
     // Calculate required initial balance
-    requirePerTokenUSD = ((2000 + 20) * 2000 * 1) / 10000;
-    token1Balance = String(Math.ceil(requirePerTokenUSD/2));
-    token2Balance = String(Math.ceil(requirePerTokenUSD/3));
+    requirePerTokenUSD = ((2000 + 20) * 10 ** 18 * 2 * 10 ** 18 * 1) / (100 * 10 ** 18);
+    token1Balance = String(requirePerTokenUSD / Number(parseEther("2")));
+    token2Balance = String(requirePerTokenUSD / Number(parseEther("3")));
     await token1.transfer(holders.target, parseEther(token1Balance));
     await token2.transfer(holders.target, parseEther(token2Balance));
 
@@ -121,17 +123,17 @@ describe("Holders", function () {
     expect(newLevels0.maximum).to.equal(toWei(100));
     expect(newLevels1.maximum).to.equal(toWei(200));
 
-    expect(newLevels0.reward).to.equal(1000);
-    expect(newLevels1.reward).to.equal(2000);
+    expect(newLevels0.reward).to.equal(toWei(1));
+    expect(newLevels1.reward).to.equal(toWei(2));
 
-    expect(newTokens0.adrs).to.equal(token1.target)
-    expect(newTokens1.adrs).to.equal(token2.target)
+    expect(newTokens0.adrs).to.equal(token1.target);
+    expect(newTokens1.adrs).to.equal(token2.target);
 
-    expect(newTokens0.price).to.equal(2)
-    expect(newTokens1.price).to.equal(3)
+    expect(newTokens0.price).to.equal(parseEther("2"));
+    expect(newTokens1.price).to.equal(parseEther("3"));
 
-    expect(newTokens0.amount).to.equal(0)
-    expect(newTokens1.amount).to.equal(0)
+    expect(newTokens0.amount).to.equal(0);
+    expect(newTokens1.amount).to.equal(0);
   });
 
   it("should allow contribution when collaboration is active", async function () {
@@ -170,20 +172,20 @@ describe("Holders", function () {
   it("should allow updating level by owner", async function () {
     // Not last level, updating balance not needed
     // see adding new level below, for balance
-    await holders.updateLevel([0, "One", 1500, 15, 150, 1500]);
+    await holders.updateLevel([0, "One", parseEther("1500"), parseEther("15"), parseEther("150"), parseEther("1.5")]);
     const newLevels0 = await holders.levels(0);
     expect(newLevels0.name).to.equal("One");
     expect(newLevels0.threshold).to.equal(toWei(1500));
     expect(newLevels0.minimum).to.equal(toWei(15));
     expect(newLevels0.maximum).to.equal(toWei(150));;
-    expect(newLevels0.reward).to.equal(1500);
+    expect(newLevels0.reward).to.equal(toWei(1.5));
   });
 
   it("should allow updating tokens by owner", async function () {
     const oldTokens1 = await holders.tokens(1);
-    await holders.updateToken([token2.target, 4]);
+    await holders.updateToken([token2.target, parseEther("4")]);
     const newTokens1 = await holders.tokens(1);
-    expect(newTokens1.price).to.equal(4);
+    expect(newTokens1.price).to.equal(toWei(4));
     expect(newTokens1.amount).to.equal(oldTokens1.amount);
   });
 
@@ -202,29 +204,28 @@ describe("Holders", function () {
 
   it("should allow adding new level by owner", async function () {
     // Calculationg additional must be fund
-    // Alternative calculation can be done with toWei(newRequiredPerTokenUsd / tokenUsdPrice) - token.balanceOf(contract) - more precise
-    const newRequiredPerTokenUsd = ((3000+30)*3000*1)/10000;
+    const newRequiredPerTokenUsd = ((3000 + 30) * 10 ** 18 * 3 * 10 ** 18 * 1) / (100 * 10 ** 18);
 
     // getNumberOfTokens then loop to get addresses of tokens and their USD prices can be used, for calculations
-    const additionalToken1Balance = toWei(newRequiredPerTokenUsd / 2) - await token1.balanceOf(holders.target);
-    const additionalToken2Balance = toWei(newRequiredPerTokenUsd / 3) - await token2.balanceOf(holders.target);
-    
+    const additionalToken1Balance = BigInt(parseEther(String(newRequiredPerTokenUsd / Number(parseEther("2"))))) - await token1.balanceOf(holders.target);
+    const additionalToken2Balance = BigInt(parseEther(String(newRequiredPerTokenUsd / Number(parseEther("3"))))) - await token2.balanceOf(holders.target);
+
     // Transfering additional funds for new level
     await token1.transfer(holders.target, String(additionalToken1Balance));
     await token2.transfer(holders.target, String(additionalToken2Balance));
 
     // Checking if balance is OK
-    expect(await token1.balanceOf(holders.target)).to.be.gte(toWei(newRequiredPerTokenUsd/2));
-    expect(await token2.balanceOf(holders.target)).to.be.gte(toWei(newRequiredPerTokenUsd/3));
+    expect(await token1.balanceOf(holders.target)).to.be.gte(BigInt(parseEther(String(newRequiredPerTokenUsd / Number(parseEther("2"))))));
+    expect(await token2.balanceOf(holders.target)).to.be.gte(BigInt(parseEther(String(newRequiredPerTokenUsd / Number(parseEther("3"))))));
 
     // Adding new level
-    await holders.addLevel(["Third", 3000, 30, 300, 3000]);
+    await holders.addLevel(["Third", parseEther("3000"), parseEther("30"), parseEther("300"), parseEther("3")]);
     const newLevels2 = await holders.levels(2);
     expect(newLevels2.id).to.equal(2);
     expect(newLevels2.name).to.equal("Third");
     expect(newLevels2.threshold).to.equal(toWei(3000));
     expect(newLevels2.minimum).to.equal(toWei(30));
     expect(newLevels2.maximum).to.equal(toWei(300));
-    expect(newLevels2.reward).to.equal(3000);
+    expect(newLevels2.reward).to.equal(toWei(3));
   });
 });
