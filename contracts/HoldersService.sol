@@ -42,12 +42,12 @@ contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender
         if (block.timestamp >= end) {
             return Status.FINISHED;
         }
-        if (status == Status.PAUSED){
+        if (status == Status.PAUSED) {
             return Status.PAUSED;
-        }  
+        }
         if (block.timestamp < start) {
             return Status.UPCOMING;
-        } 
+        }
         if (checkBalances(levels[levels.length - 1])) {
             return Status.ACTIVE;
         } else {
@@ -61,7 +61,10 @@ contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender
         uint256 usdAmount = 0;
         for (uint256 i = 0; i < tokens.length; i++) {
             if (tokens[i].adrs == _token) {
-                usdAmount = _amount * tokens[i].price;
+                // amount * 10^18 * price * 10^18 / 10^18 = amount*price*10^18 (Universal token amount)
+                // Token1.amount * Token1.price / UniversalToken.price
+                // UniversalToken.price = 1 <-- 1 token = 1 token.
+                usdAmount = (_amount * tokens[i].price) / 1 ether;
                 found = true;
             }
         }
@@ -127,10 +130,11 @@ contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender
         uint256 levelMinimum = _level.minimum;
         uint256 levelReward = _level.reward;
 
-        uint256 requiredAmountUsd = ((levelThreshold + levelMinimum) * levelReward * (tokens.length - 1)) / 10000;
+        // (t+min)*10^18 * r * 10^18 * n / 100 * 10^18 = (t+min)*10^18 * r * n / 100
+        uint256 requiredAmountUsd = ((levelThreshold + levelMinimum) * levelReward * (tokens.length - 1)) / perc100;
 
         // Ceil
-        if (((levelThreshold + levelMinimum) * levelReward * (tokens.length - 1)) % 10000 != 0) {
+        if (((levelThreshold + levelMinimum) * levelReward * (tokens.length - 1)) % perc100 != 0) {
             requiredAmountUsd++;
         }
 
@@ -166,28 +170,22 @@ contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender
         delete levels;
 
         for (uint256 i = 0; i < _levels.length; i++) {
-            _levels[i].treshhold = _levels[i].treshhold * 1 ether;
-            _levels[i].minimum = _levels[i].minimum * 1 ether;
-            _levels[i].maximum = _levels[i].maximum * 1 ether;
-
             require(_levels[i].minimum <= _levels[i].maximum, "HoldersService: Must be min <= max");
-            require(
-                _levels[i].reward >= 0 && _levels[i].reward <= 10000,
-                "HoldersService: Must be 0 <= reward <= 10000"
-            );
             if (i > 0) {
                 require(_levels[i].threshold > _levels[i - 1].threshold, "HoldersService: threshold must increase");
                 require(_levels[i].reward > _levels[i - 1].reward, "HoldersService: Reward must increase");
             }
 
-            levels.push(Level(
-                i,
-                _levels[i].name,
-                _levels[i].threshold,
-                _levels[i].minimum,
-                _levels[i].maximum,
-                _levels[i].reward
-            ));
+            levels.push(
+                Level(
+                    i,
+                    _levels[i].name,
+                    _levels[i].threshold,
+                    _levels[i].minimum,
+                    _levels[i].maximum,
+                    _levels[i].reward
+                )
+            );
         }
 
         return true;

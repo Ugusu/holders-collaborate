@@ -15,6 +15,8 @@ abstract contract HoldersFactory {
 
     Status internal status = Status.ACTIVE;
 
+    uint256 perc100 = 100 * 1 ether;
+
     // EVENTS
 
     event StatusUpdate(Status oldStatus, Status newStatus);
@@ -31,8 +33,8 @@ abstract contract HoldersFactory {
 
     // Getters
     function getCollaboratorId(address _token, address _collaborator) public view returns (uint256) {
-        for (uint256 i = 0; i < collaborators[_token].length; i++){
-            if(collaborators[_token][i].adrs == _collaborator){
+        for (uint256 i = 0; i < collaborators[_token].length; i++) {
+            if (collaborators[_token][i].adrs == _collaborator) {
                 return i;
             }
         }

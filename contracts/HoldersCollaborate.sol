@@ -64,10 +64,6 @@ contract HoldersCollaborate is HoldersFactory, HoldersService {
     // Changes levels of the collaboration
     function updateLevel(Level memory _level) public onlyOwner onlyUpcoming returns (bool) {
         require(_level.id < levels.length, "HoldersCollaborate: No level");
-        _level.treshhold = _level.treshhold * 1 ether;
-        _level.minimum = _level.minimum * 1 ether;
-        _level.maximum = _level.maximum * 1 ether;
-
         checkLevelParamsConsistency(_level);
 
         uint256 levelId = _level.id;
@@ -124,10 +120,6 @@ contract HoldersCollaborate is HoldersFactory, HoldersService {
 
     // Adds new level
     function addLevel(LevelTemplate memory _level) public onlyOwner returns (bool) {
-        _level.treshhold = _level.treshhold * 1 ether;
-        _level.maximum = _level.maximum * 1 ether;
-        _level.minimum = _level.minimum * 1 ether;
-        
         Level memory newLevel = Level(
             levels.length,
             _level.name,
