@@ -6,14 +6,14 @@ struct Level {
         Levels of the Collaboration:
             id - id of the level in array
             levelName - the name of the level
-            treshhold - treshhold needed, to be active
+            threshold - threshold needed, to be active
             minimum - minimum contribution value
             maximum - maximum contribution value
             active - if the level is currently active
     */
     uint256 id;
     string name;
-    uint256 treshhold;
+    uint256 threshold;
     uint256 minimum;
     uint256 maximum;
     uint256 reward;
@@ -23,13 +23,13 @@ struct LevelTemplate {
     /*
         Levels of the Collaboration:
             levelName - the name of the level
-            treshhold - treshhold needed, to be active
+            threshold - threshold needed, to be active
             minimum - minimum contribution value
             maximum - maximum contribution value
             active - if the level is currently active
     */
     string name;
-    uint256 treshhold;
+    uint256 threshold;
     uint256 minimum;
     uint256 maximum;
     uint256 reward;

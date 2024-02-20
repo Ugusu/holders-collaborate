@@ -51,14 +51,14 @@ contract HoldersCollaborate is HoldersFactory, HoldersService {
 
     // Changes status of the collaboration (between ACTIVE and PAUSED)
     // see getStatus() function.
-    function changeStatus(Status _status) public onlyOwner returns (bool) {
+    function updateStatus(Status _status) public onlyOwner returns (bool) {
         require(_status == Status.PAUSED || _status == Status.ACTIVE, "HoldersCollaborate: Only paused/active");
         require(getStatus() != Status.FINISHED, "HoldersCollaborate: Finished");
 
         Status oldStatus = status;
         status = _status;
 
-        emit StatusChange(oldStatus, status);
+        emit StatusUpdate(oldStatus, status);
 
         return true;
     }
@@ -78,7 +78,7 @@ contract HoldersCollaborate is HoldersFactory, HoldersService {
         levels[levelId].name = _level.name;
         levels[levelId].minimum = _level.minimum;
         levels[levelId].maximum = _level.maximum;
-        levels[levelId].treshhold = _level.treshhold;
+        levels[levelId].threshold = _level.threshold;
         levels[levelId].reward = _level.reward;
 
         emit LevelUpdate(oldLevel, levels[levelId]);
@@ -133,7 +133,7 @@ contract HoldersCollaborate is HoldersFactory, HoldersService {
         Level memory newLevel = Level(
             levels.length,
             _level.name,
-            _level.treshhold,
+            _level.threshold,
             _level.minimum,
             _level.maximum,
             _level.reward

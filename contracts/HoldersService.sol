@@ -90,11 +90,11 @@ contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender
         uint256 lastLevelId = levels.length - 1;
 
         Level memory currentLevel = getActiveLevel();
-        // Must be between min and max, must be not last level or if last level, within treshhold + minimum
+        // Must be between min and max, must be not last level or if last level, within threshold + minimum
         if (
             amountUsd >= currentLevel.minimum &&
             amountUsd <= currentLevel.maximum &&
-            (currentLevel.id < lastLevelId || tokenAmount + amountUsd <= currentLevel.treshhold + currentLevel.minimum)
+            (currentLevel.id < lastLevelId || tokenAmount + amountUsd <= currentLevel.threshold + currentLevel.minimum)
         ) {
             return true;
         }
@@ -116,19 +116,19 @@ contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender
         return tokenContract.transferFrom(_holder, address(this), _amount);
     }
 
-    // Check if treshholds for later levels are higher than for earlier levels
+    // Check if thresholds for later levels are higher than for earlier levels
     function checkLevelParamsConsistency(Level memory _level) public view returns (bool) {
         uint256 levelId = _level.id;
 
         require(_level.minimum <= _level.maximum, "HoldersService: Must be min <= max");
         if (levelId > 0) {
             require(_level.id > levels[levelId - 1].id, "HoldersService: Order must increase");
-            require(_level.treshhold > levels[levelId - 1].treshhold, "HoldersService: Treshhold must increase");
+            require(_level.threshold > levels[levelId - 1].threshold, "HoldersService: threshold must increase");
             require(_level.reward > levels[levelId - 1].reward, "HoldersService: Reward must increase");
         }
         if (levelId < levels.length - 1) {
             require(_level.id < levels[levelId + 1].id, "HoldersService: Order must increase");
-            require(_level.treshhold < levels[levelId + 1].treshhold, "THoldersService: reshhold must increase");
+            require(_level.threshold < levels[levelId + 1].threshold, "THoldersService: reshhold must increase");
             require(_level.reward < levels[levelId + 1].reward, "HoldersService: Reward must increase");
         } else {
             require(checkBalances(_level), "HoldersService: Insufficient balance");
@@ -139,14 +139,14 @@ contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender
 
     // Check contract balance before collaboration start
     function checkBalances(Level memory _level) public view returns (bool) {
-        uint256 levelTreshhold = _level.treshhold;
+        uint256 levelThreshold = _level.threshold;
         uint256 levelMinimum = _level.minimum;
         uint256 levelReward = _level.reward;
 
-        uint256 requiredAmountUsd = ((levelTreshhold + levelMinimum) * levelReward * (tokens.length - 1)) / 10000;
+        uint256 requiredAmountUsd = ((levelThreshold + levelMinimum) * levelReward * (tokens.length - 1)) / 10000;
 
         // Ceil
-        if (((levelTreshhold + levelMinimum) * levelReward * (tokens.length - 1)) % 10000 != 0) {
+        if (((levelThreshold + levelMinimum) * levelReward * (tokens.length - 1)) % 10000 != 0) {
             requiredAmountUsd++;
         }
 
@@ -192,14 +192,14 @@ contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender
                 "HoldersService: Must be 0 <= reward <= 10000"
             );
             if (i > 0) {
-                require(_levels[i].treshhold > _levels[i - 1].treshhold, "HoldersService: Treshhold must increase");
+                require(_levels[i].threshold > _levels[i - 1].threshold, "HoldersService: threshold must increase");
                 require(_levels[i].reward > _levels[i - 1].reward, "HoldersService: Reward must increase");
             }
 
             levels.push(Level(
                 i,
                 _levels[i].name,
-                _levels[i].treshhold,
+                _levels[i].threshold,
                 _levels[i].minimum,
                 _levels[i].maximum,
                 _levels[i].reward
