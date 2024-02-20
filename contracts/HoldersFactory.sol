@@ -17,7 +17,7 @@ abstract contract HoldersFactory {
 
     // EVENTS
 
-    event StatusChange(Status oldStatus, Status newStatus);
+    event StatusUpdate(Status oldStatus, Status newStatus);
 
     event LevelUpdate(Level oldLevel, Level newLevel);
 
@@ -56,7 +56,7 @@ abstract contract HoldersFactory {
             }
         }
         for (uint256 i = 0; i < levels.length; i++) {
-            if (minTokenAmount <= levels[i].treshhold) {
+            if (minTokenAmount <= levels[i].threshold) {
                 return levels[i];
             }
         }
