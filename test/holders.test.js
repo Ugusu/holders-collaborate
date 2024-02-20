@@ -112,8 +112,8 @@ describe("Holders", function () {
     expect(newLevels0.name).to.equal("First");
     expect(newLevels1.name).to.equal("Second");
 
-    expect(newLevels0.treshhold).to.equal(toWei(1000));
-    expect(newLevels1.treshhold).to.equal(toWei(2000));
+    expect(newLevels0.threshold).to.equal(toWei(1000));
+    expect(newLevels1.threshold).to.equal(toWei(2000));
 
     expect(newLevels0.minimum).to.equal(toWei(10));
     expect(newLevels1.minimum).to.equal(toWei(20));
@@ -156,10 +156,8 @@ describe("Holders", function () {
   });
 
   it("should allow changing collaboration status by owner", async function () {
-    await expect(holders.connect(holder1).changeStatus(3)).to.be.revertedWithCustomError(holders, "OwnableUnauthorizedAccount").withArgs(holder1.address);
-    await expect(holders.connect(holder1).changeStatus(3)).to.be.revertedWithCustomError(holders, "OwnableUnauthorizedAccount").withArgs(holder1.address);
-    await holders.connect(owner).changeStatus(3);
-    expect(await holders.getStatus()).to.equal(3);
+    await expect(holders.connect(holder1).updateStatus(3)).to.be.revertedWithCustomError(holders, "OwnableUnauthorizedAccount").withArgs(holder1.address);
+    await holders.connect(owner).updateStatus(3);
     expect(await holders.getStatus()).to.equal(3);
   });
 
@@ -169,7 +167,7 @@ describe("Holders", function () {
     await holders.updateLevel([0, "One", 1500, 15, 150, 1500]);
     const newLevels0 = await holders.levels(0);
     expect(newLevels0.name).to.equal("One");
-    expect(newLevels0.treshhold).to.equal(toWei(1500));
+    expect(newLevels0.threshold).to.equal(toWei(1500));
     expect(newLevels0.minimum).to.equal(toWei(15));
     expect(newLevels0.maximum).to.equal(toWei(150));;
     expect(newLevels0.reward).to.equal(1500);
@@ -218,7 +216,7 @@ describe("Holders", function () {
     const newLevels2 = await holders.levels(2);
     expect(newLevels2.id).to.equal(2);
     expect(newLevels2.name).to.equal("Third");
-    expect(newLevels2.treshhold).to.equal(toWei(3000));
+    expect(newLevels2.threshold).to.equal(toWei(3000));
     expect(newLevels2.minimum).to.equal(toWei(30));
     expect(newLevels2.maximum).to.equal(toWei(300));
     expect(newLevels2.reward).to.equal(3000);
