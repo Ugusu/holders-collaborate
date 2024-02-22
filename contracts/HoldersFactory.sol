@@ -42,7 +42,7 @@ abstract contract HoldersFactory {
         return collaborators[_token].length;
     }
 
-    function getTokenByAddress(address _token) public view returns (Token memory) {
+    function getTokenByAddress(address _token) public view returns (Token memory token) {
         for (uint256 i = 0; i < tokens.length; i++) {
             if (tokens[i].adrs == _token) {
                 return tokens[i];
@@ -50,7 +50,7 @@ abstract contract HoldersFactory {
         }
     }
 
-    function getActiveLevel() public view returns (Level memory) {
+    function getActiveLevel() public view returns (Level memory level) {
         uint256 minTokenAmount = tokens[0].amount;
         for (uint256 i = 1; i < tokens.length; i++) {
             if (tokens[i].amount < minTokenAmount) {
@@ -77,9 +77,5 @@ abstract contract HoldersFactory {
 
     function getNumberOfTokesn() public view returns (uint256) {
         return tokens.length;
-    }
-
-    function getNumberOfLevels() public view returns (uint256) {
-        return levels.length;
     }
 }
