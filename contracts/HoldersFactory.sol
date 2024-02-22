@@ -31,6 +31,8 @@ abstract contract HoldersFactory {
 
     event Contribute(address collaborator, address token, uint256 amount, uint256 usdAmount);
 
+    event Cancel(address canceller, Token[] tokens);
+
     // Getters
     function getCollaboratorId(address _token, address _collaborator) public view returns (uint256) {
         for (uint256 i = 0; i < collaborators[_token].length; i++) {

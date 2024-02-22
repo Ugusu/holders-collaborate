@@ -8,8 +8,9 @@ import "./HoldersFactory.sol";
 
 interface ERC20 {
     function balanceOf(address _account) external view returns (uint256);
-    function allowance(address holder, address spender) external view returns (uint256);
-    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+    function allowance(address _holder, address _spender) external view returns (uint256);
+    function transferFrom(address _from, address _to, uint256 _amount) external returns (bool);
+    function approve(address _spender, uint256 _amount) external returns (bool);
 }
 
 contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender) {

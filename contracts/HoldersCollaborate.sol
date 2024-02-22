@@ -2,10 +2,9 @@
 pragma solidity ^0.8.19;
 
 import {Level, Token, Status, Collaborator, LevelTemplate, TokenTemplate} from "./Elements.sol";
-import "./HoldersFactory.sol";
 import "./HoldersService.sol";
 
-contract HoldersCollaborate is HoldersFactory, HoldersService {
+contract HoldersCollaborate is HoldersService {
     constructor(
         TokenTemplate[] memory _tokens,
         LevelTemplate[] memory _levels,
@@ -135,6 +134,30 @@ contract HoldersCollaborate is HoldersFactory, HoldersService {
         levels.push(newLevel);
 
         emit LevelAdd(newLevel);
+
+        return true;
+    }
+
+    // Cancel and withdraw funds
+    function cancel() public onlyOwner onlyUpcoming returns (bool) {
+        Token[] memory returnedTokens = new Token[](tokens.length);
+
+        for (uint256 i = 0; i < tokens.length; i++){
+            require(tokens[i].amount == 0, "HoldersCollaborate: Funds contributed");
+
+            ERC20 tokenContract = ERC20(tokens[i].adrs);
+            uint256 contractsTokenBalance = tokenContract.balanceOf(address(this));
+            uint256 contractsTokenBalanceUsd = tokenToUsd(tokens[i].adrs, contractsTokenBalance);
+
+            require(tokenContract.approve(address(this), contractsTokenBalance), "HoldersCollaborate: Could not approve");
+            require(tokenContract.transferFrom(address(this), msg.sender, contractsTokenBalance), "HoldersCollaborate: Could not transger");
+
+            returnedTokens[i] = Token(tokens[i].adrs, tokens[i].price, contractsTokenBalanceUsd);
+        }
+
+        updateStatus(Status.PAUSED);
+
+        emit Cancel(msg.sender, returnedTokens);
 
         return true;
     }

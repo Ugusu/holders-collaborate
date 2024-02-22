@@ -228,4 +228,19 @@ describe("Holders", function () {
     expect(newLevels2.maximum).to.equal(toWei(300));
     expect(newLevels2.reward).to.equal(toWei(3));
   });
+
+  it("should allow cancel by owner before start", async function () {
+    expect(await holders.getStatus()).to.be.equal(0);
+    expect(await token1.balanceOf(holders.target)).to.be.equal(BigInt(parseEther(token1Balance)));
+    expect(await token2.balanceOf(holders.target)).to.be.equal(BigInt(parseEther(token2Balance)));
+    await holders.cancel();
+    expect(await holders.getStatus()).to.be.equal(3);
+    expect(await token1.balanceOf(holders.target)).to.be.equal(0);
+    expect(await token2.balanceOf(holders.target)).to.be.equal(0);
+  });
+
+  it("should not allow cancel by owner after start", async function () {
+    await waitStart(holders);
+    await expect(holders.cancel()).to.be.revertedWith("HoldersService: Not UPCOMING");
+  });
 });
