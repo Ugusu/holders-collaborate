@@ -140,6 +140,8 @@ contract HoldersCollaborate is HoldersService {
 
     // Cancel and withdraw funds
     function cancel() public onlyOwner onlyUpcoming returns (bool) {
+        // Since we have many admins, Cancel event shows who canceled, and how much funds they received
+        // Can be implemented to require vote from majority or all admins
         Token[] memory returnedTokens = new Token[](tokens.length);
 
         for (uint256 i = 0; i < tokens.length; i++){
