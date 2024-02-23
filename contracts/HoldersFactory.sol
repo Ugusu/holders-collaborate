@@ -1,9 +1,18 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.19;
 
-import {Level, Token, Status, Collaborator} from "./Elements.sol";
+import {Admin} from "./Admin.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Level, Token, Status, Collaborator, LevelTemplate, TokenTemplate} from "./Elements.sol";
 
-abstract contract HoldersFactory {
+interface ERC20 {
+    function balanceOf(address _account) external view returns (uint256);
+    function allowance(address _holder, address _spender) external view returns (uint256);
+    function transferFrom(address _from, address _to, uint256 _amount) external returns (bool);
+    function approve(address _spender, uint256 _amount) external returns (bool);
+}
+
+abstract contract HoldersFactory is Admin(msg.sender), Ownable(msg.sender) {
     // DATA
     Token[] public tokens;
     Level[] public levels;

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.19;
 
-import {Level, Token, Status, Collaborator, LevelTemplate, TokenTemplate} from "./Elements.sol";
 import "./HoldersService.sol";
 
 contract HoldersCollaborate is HoldersService {

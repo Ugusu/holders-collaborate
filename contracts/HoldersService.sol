@@ -1,19 +1,9 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.19;
 
-import {Admin} from "./Admin.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Level, Token, Status, Collaborator, LevelTemplate, TokenTemplate} from "./Elements.sol";
 import "./HoldersFactory.sol";
 
-interface ERC20 {
-    function balanceOf(address _account) external view returns (uint256);
-    function allowance(address _holder, address _spender) external view returns (uint256);
-    function transferFrom(address _from, address _to, uint256 _amount) external returns (bool);
-    function approve(address _spender, uint256 _amount) external returns (bool);
-}
-
-contract HoldersService is HoldersFactory, Admin(msg.sender), Ownable(msg.sender) {
+abstract contract HoldersService is HoldersFactory {
     modifier onlyUpcoming() {
         require(getStatus() == Status.UPCOMING, "HoldersService: Not UPCOMING");
         _;
